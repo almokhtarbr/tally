@@ -1,0 +1,23 @@
+<%
+  detail = event.properties["path"]
+  detail ||= event.properties["text"]&.truncate(60) if event.name == "$click"
+  detail ||= event.properties["selector"]&.truncate(60) if ["$click","$rage_click","$dead_click"].include?(event.name)
+  detail ||= event.properties["fields"] if event.name == "$form_submit"
+  detail ||= event.properties["message"]&.truncate(60) if ["$error","$promise_error"].include?(event.name)
+  detail ||= "#{event.properties['depth_percent']}% scrolled" if event.name == "$scroll_depth"
+  detail ||= "#{event.properties['time_on_page_seconds']}s" if event.name == "$page_leave"
+  detail ||= event.properties["url"]&.truncate(60) if event.name == "$outbound_click"
+  detail ||= "—"
+%>
+<tr class="border-t border-[#f8f8fb] hover:bg-[#fafafb]">
+  <td class="px-4 py-2"><%= event_badge(event.name) %></td>
+  <td class="px-4 py-2 text-[13px] text-[#4a4a68]">
+    <% if event.user_profile %>
+      <%= link_to event.user_profile.external_id, user_profile_project_path(event.project, user_profile_id: event.user_profile_id), class: "hover:text-[#5046e5]" %>
+    <% else %>
+      anonymous
+    <% end %>
+  </td>
+  <td class="px-4 py-2 text-[13px] text-[#8b8ba3] truncate max-w-[300px]"><%= detail %></td>
+  <td class="px-4 py-2 text-[12px] text-[#b4b4c8] text-right whitespace-nowrap"><%= time_ago_in_words(event.occurred_at) %></td>
+</tr>

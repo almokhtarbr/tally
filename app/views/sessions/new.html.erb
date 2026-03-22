@@ -1,0 +1,28 @@
+<div class="min-h-screen bg-[#fafafb] flex items-center justify-center">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-6">
+      <h1 class="text-[22px] font-bold text-[#1a1a2e]">Tally</h1>
+      <p class="text-[13px] text-[#8b8ba3] mt-1">Sign in to your analytics dashboard</p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-[#e8e8ee] p-6">
+      <% if flash[:alert] %>
+        <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+          <p class="text-[12px] text-red-700"><%= flash[:alert] %></p>
+        </div>
+      <% end %>
+
+      <%= form_with url: session_path, method: :post, class: "space-y-4" do %>
+        <div>
+          <label class="text-[12px] text-[#4a4a68] font-medium block mb-1">Email</label>
+          <input type="email" name="email" required autofocus class="w-full text-[13px] text-[#2d2d42] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-3 py-2" placeholder="you@example.com">
+        </div>
+        <div>
+          <label class="text-[12px] text-[#4a4a68] font-medium block mb-1">Password</label>
+          <input type="password" name="password" required class="w-full text-[13px] text-[#2d2d42] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-3 py-2">
+        </div>
+        <button type="submit" class="w-full bg-[#5046e5] text-white text-[13px] font-medium py-2.5 rounded-md hover:bg-[#4338ca]">Sign In</button>
+      <% end %>
+    </div>
+  </div>
+</div>

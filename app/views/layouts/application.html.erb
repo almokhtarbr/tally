@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+  <head>
+    <title>Tally</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+    <% turbo_refreshes_with method: :morph, scroll: :preserve %>
+  </head>
+
+  <body class="h-full bg-white">
+    <div class="flex h-full">
+
+      <!-- Sidebar -->
+      <aside class="w-[52px] hover:w-[200px] group/sidebar flex-shrink-0 bg-[#1b1b25] flex flex-col transition-all duration-200 overflow-hidden">
+        <div class="h-12 flex items-center px-4 flex-shrink-0">
+          <svg class="w-5 h-5 text-[#7c6cff] flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+          <span class="ml-3 text-sm font-semibold text-white whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity">Tally</span>
+        </div>
+
+        <nav class="flex-1 py-2 px-2 space-y-0.5">
+          <%= link_to root_path, class: "flex items-center gap-3 px-2 py-2 rounded-md #{request.path == '/' ? 'bg-white/10' : 'hover:bg-white/5'}" do %>
+            <svg class="w-[18px] h-[18px] text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+            <span class="text-[13px] text-gray-300 whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity">Home</span>
+          <% end %>
+          <%= link_to projects_path, class: "flex items-center gap-3 px-2 py-2 rounded-md #{request.path.start_with?('/projects') ? 'bg-white/10' : 'hover:bg-white/5'}" do %>
+            <svg class="w-[18px] h-[18px] text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <span class="text-[13px] text-gray-300 whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity">Analytics</span>
+          <% end %>
+
+          <% if @project.present? && @project.persisted? %>
+            <% project = @project %>
+            <div class="hidden group-hover/sidebar:block pl-4 space-y-0.5 mt-1">
+              <%
+                subnav = [
+                  { label: "Overview", path: project_path(project) },
+                  { label: "Events", path: event_explorer_project_path(project) },
+                  { label: "Users", path: users_project_path(project) },
+                  { label: "Funnels", path: funnels_project_path(project) },
+                  { label: "Retention", path: retention_project_path(project) },
+                  { label: "Forms", path: forms_project_path(project) },
+                  { label: "Errors", path: errors_project_path(project) },
+                ]
+                current_path = request.path
+              %>
+              <% subnav.each do |item| %>
+                <% active = current_path == item[:path] || (item[:label] == "Overview" && current_path == project_path(project)) %>
+                <%= link_to item[:path], class: "block px-2 py-1.5 rounded-md text-[12px] whitespace-nowrap #{active ? 'text-white bg-white/10' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}" do %>
+                  <%= item[:label] %>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </nav>
+      </aside>
+
+      <!-- Main -->
+      <main class="flex-1 overflow-y-auto bg-[#fafafb]">
+        <% if notice.present? %>
+          <div class="mx-6 mt-3 rounded-lg bg-emerald-50 border border-emerald-100 px-4 py-2">
+            <p class="text-[13px] text-emerald-700"><%= notice %></p>
+          </div>
+        <% end %>
+        <div class="px-6 py-5"><%= yield %></div>
+      </main>
+    </div>
+  </body>
+</html>

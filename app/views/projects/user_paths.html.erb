@@ -1,0 +1,65 @@
+<%= render "projects/page_header",
+  title: @project.name, subtitle: @project.url, back_path: root_path,
+  date_form_url: user_paths_project_path(@project), from: @from, to: @to,
+  extra_hidden_fields: { start_event: @start_event, depth: @depth },
+  project: @project, active_tab: "Paths" %>
+
+<!-- Configuration -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] p-4 mb-4">
+  <%= form_with url: user_paths_project_path(@project), method: :get, class: "flex items-center gap-3 flex-wrap" do %>
+    <input type="hidden" name="from" value="<%= @from %>">
+    <input type="hidden" name="to" value="<%= @to %>">
+    <div class="flex items-center gap-1.5">
+      <label class="text-[11px] text-[#8b8ba3] font-medium">Starting event</label>
+      <select name="start_event" class="text-[12px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-2 py-[5px] min-w-[160px]">
+        <% @available_events.each do |name| %>
+          <option value="<%= name %>" <%= "selected" if @start_event == name %>><%= name %></option>
+        <% end %>
+      </select>
+    </div>
+    <div class="flex items-center gap-1.5">
+      <label class="text-[11px] text-[#8b8ba3] font-medium">Path depth</label>
+      <select name="depth" class="text-[12px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-2 py-[5px]">
+        <% (2..5).each do |d| %>
+          <option value="<%= d %>" <%= "selected" if @depth == d %>><%= d %> steps</option>
+        <% end %>
+      </select>
+    </div>
+    <button type="submit" class="bg-[#5046e5] text-white text-[11px] font-medium px-3 py-[5px] rounded-md hover:bg-[#4338ca]">Analyze</button>
+  <% end %>
+</div>
+
+<!-- Results -->
+<% if @paths.any? %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee] mb-4">
+    <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#f0f0f5]">
+      <p class="text-[13px] font-medium text-[#1a1a2e]">Top User Paths</p>
+      <span class="text-[11px] text-[#8b8ba3]"><%= number_with_delimiter(@total_sessions) %> total sessions analyzed</span>
+    </div>
+    <% max_count = @paths.values.first.to_f %>
+    <% @paths.each do |(path, count)| %>
+      <div class="relative px-4 py-3 border-t border-[#f8f8fb]">
+        <div class="absolute inset-y-0 left-0 opacity-[0.07] rounded-r" style="width:<%= (count / max_count * 100).round %>%; background:#5046e5"></div>
+        <div class="relative flex items-center justify-between gap-4">
+          <div class="flex items-center gap-2 flex-wrap min-w-0">
+            <% path.split(" → ").each_with_index do |step, idx| %>
+              <% if idx > 0 %>
+                <svg style="width:10px;height:10px;flex-shrink:0" class="text-[#c4c4d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              <% end %>
+              <span class="text-[12px] text-[#2d2d42] bg-[#f5f3ff] px-2 py-0.5 rounded truncate max-w-[200px]"><%= step.truncate(40) %></span>
+            <% end %>
+          </div>
+          <div class="flex items-center gap-3 flex-shrink-0">
+            <span class="text-[13px] text-[#8b8ba3] font-mono tabular-nums"><%= number_with_delimiter(count) %></span>
+            <span class="text-[11px] text-[#8b8ba3] w-[45px] text-right"><%= (@total_sessions > 0 ? (count.to_f / @total_sessions * 100).round(1) : 0) %>%</span>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee] p-10 mb-4 text-center">
+    <svg class="w-10 h-10 mx-auto text-[#e8e8ee] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+    <p class="text-[13px] text-[#8b8ba3]">No path data available. Sessions with multiple events will appear here.</p>
+  </div>
+<% end %>

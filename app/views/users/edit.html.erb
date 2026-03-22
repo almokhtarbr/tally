@@ -1,0 +1,37 @@
+<div class="max-w-md mx-auto py-8 px-4">
+  <h1 class="text-[18px] font-semibold text-[#1a1a2e] mb-6">Edit User: <%= @user.name %></h1>
+
+  <div class="bg-white rounded-xl border border-[#e8e8ee] p-5">
+    <%= form_with model: @user, class: "space-y-4" do |f| %>
+      <% if @user.errors.any? %>
+        <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+          <% @user.errors.full_messages.each do |msg| %>
+            <p class="text-[12px] text-red-700"><%= msg %></p>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div>
+        <label class="text-[12px] text-[#4a4a68] font-medium block mb-1">Name</label>
+        <%= f.text_field :name, class: "w-full text-[13px] text-[#2d2d42] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-3 py-2" %>
+      </div>
+      <div>
+        <label class="text-[12px] text-[#4a4a68] font-medium block mb-1">Email</label>
+        <%= f.email_field :email, class: "w-full text-[13px] text-[#2d2d42] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-3 py-2" %>
+      </div>
+      <div>
+        <label class="text-[12px] text-[#4a4a68] font-medium block mb-1">Password (leave blank to keep)</label>
+        <%= f.password_field :password, class: "w-full text-[13px] text-[#2d2d42] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-3 py-2" %>
+      </div>
+      <div>
+        <label class="text-[12px] text-[#4a4a68] font-medium block mb-1">Role</label>
+        <%= f.select :role, [["Member", "member"], ["Admin", "admin"]], {}, class: "text-[13px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-3 py-2" %>
+      </div>
+
+      <div class="flex items-center gap-3 pt-2">
+        <%= f.submit "Update User", class: "bg-[#5046e5] text-white text-[12px] font-medium px-4 py-[6px] rounded-md hover:bg-[#4338ca] cursor-pointer" %>
+        <%= link_to "Cancel", users_path, class: "text-[12px] text-[#8b8ba3] hover:text-[#4a4a68]" %>
+      </div>
+    <% end %>
+  </div>
+</div>

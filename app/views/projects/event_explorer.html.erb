@@ -1,0 +1,226 @@
+<%= render "projects/page_header",
+  title: @project.name, subtitle: @project.url, back_path: root_path,
+  date_form_url: event_explorer_project_path(@project), from: @from, to: @to,
+  extra_hidden_fields: { event_name: params[:event_name], prop_key: params[:prop_key], prop_value: params[:prop_value], metric: @metric, group_by: @group_by }.compact,
+  project: @project, active_tab: "Events" %>
+
+<!-- Filter Bar -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] p-4 mb-4">
+  <%= form_with url: event_explorer_project_path(@project), method: :get, class: "flex items-center gap-3 flex-wrap" do %>
+    <input type="hidden" name="from" value="<%= @from %>">
+    <input type="hidden" name="to" value="<%= @to %>">
+    <div class="flex items-center gap-1.5">
+      <label class="text-[11px] text-[#8b8ba3] font-medium">Event</label>
+      <select name="event_name" class="text-[12px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-2 py-[5px] min-w-[160px]">
+        <option value="">All events</option>
+        <% @available_events.each do |name| %>
+          <option value="<%= name %>" <%= "selected" if params[:event_name] == name %>><%= name %></option>
+        <% end %>
+      </select>
+    </div>
+    <div class="flex items-center gap-1.5">
+      <label class="text-[11px] text-[#8b8ba3] font-medium">Property</label>
+      <input type="text" name="prop_key" value="<%= params[:prop_key] %>" placeholder="key" class="text-[12px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-2 py-[5px] w-[100px]">
+    </div>
+    <div class="flex items-center gap-1.5">
+      <label class="text-[11px] text-[#8b8ba3] font-medium">Value</label>
+      <input type="text" name="prop_value" value="<%= params[:prop_value] %>" placeholder="contains..." class="text-[12px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-2 py-[5px] w-[120px]">
+    </div>
+    <div class="flex items-center gap-1.5">
+      <label class="text-[11px] text-[#8b8ba3] font-medium">Group by</label>
+      <select name="group_by" class="text-[12px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-2 py-[5px] min-w-[120px]">
+        <option value="">None</option>
+        <% @available_properties.each do |prop| %>
+          <option value="<%= prop %>" <%= "selected" if @group_by == prop %>><%= prop %></option>
+        <% end %>
+      </select>
+    </div>
+    <div class="flex items-center gap-1.5">
+      <label class="text-[11px] text-[#8b8ba3] font-medium">then by</label>
+      <select name="second_group_by" class="text-[12px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-2 py-[5px] min-w-[120px]">
+        <option value="">None</option>
+        <% @available_properties.each do |prop| %>
+          <option value="<%= prop %>" <%= "selected" if @second_group_by == prop %>><%= prop %></option>
+        <% end %>
+      </select>
+    </div>
+    <button type="submit" class="bg-[#5046e5] text-white text-[11px] font-medium px-3 py-[5px] rounded-md hover:bg-[#4338ca]">Apply</button>
+    <% if params[:event_name].present? || params[:prop_key].present? || @group_by.present? %>
+      <%= link_to "Clear", event_explorer_project_path(@project, from: @from, to: @to), class: "text-[11px] text-[#8b8ba3] hover:text-[#5046e5]" %>
+    <% end %>
+  <% end %>
+</div>
+
+<!-- Metric Toggle + KPI -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] mb-4 px-4 py-3 flex items-center justify-between">
+  <div>
+    <p class="text-[11px] text-[#8b8ba3] font-medium"><%= @metric == "unique_users" ? "Unique Users" : "Total Events" %></p>
+    <span class="text-[20px] font-semibold text-[#1a1a2e] leading-none tabular-nums mt-1 block"><%= number_with_delimiter(@metric == "unique_users" ? @unique_users_count : @total_count) %></span>
+  </div>
+  <div class="flex items-center bg-[#fafafb] rounded-lg border border-[#e8e8ee] overflow-hidden">
+    <%
+      base_params = { from: @from, to: @to, event_name: params[:event_name], prop_key: params[:prop_key], prop_value: params[:prop_value], group_by: @group_by }.compact
+    %>
+    <%= link_to "Total Events", event_explorer_project_path(@project, base_params.merge(metric: "total")),
+        class: "px-3 py-[5px] text-[11px] font-medium #{@metric != 'unique_users' ? 'bg-[#5046e5] text-white' : 'text-[#8b8ba3] hover:text-[#4a4a68]'}" %>
+    <%= link_to "Unique Users", event_explorer_project_path(@project, base_params.merge(metric: "unique_users")),
+        class: "px-3 py-[5px] text-[11px] font-medium #{@metric == 'unique_users' ? 'bg-[#5046e5] text-white' : 'text-[#8b8ba3] hover:text-[#4a4a68]'}" %>
+  </div>
+</div>
+
+<!-- Chart -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] p-5 mb-4">
+  <div class="flex items-center justify-between mb-4">
+    <p class="text-[13px] font-medium text-[#1a1a2e]"><%= @metric == "unique_users" ? "Unique Users" : "Events" %> Over Time</p>
+    <% if @group_by.blank? %>
+      <span class="flex items-center gap-1.5 text-[11px] text-[#8b8ba3]"><span class="inline-block w-2 h-2 rounded-full bg-[#5046e5]"></span><%= @metric == "unique_users" ? "Users" : "Events" %></span>
+    <% end %>
+  </div>
+  <% if @chart_dates.any? %>
+    <% if @group_by.present? && @group_by_daily.present? %>
+      <%
+        palette = %w[#5046e5 #a78bfa #0ea5e9 #14b8a6 #22c55e]
+        datasets_json = @group_by_daily.each_with_index.map { |(val, daily), i|
+          { label: val, data: @chart_dates.map { |d| daily[Date.parse(d)] || 0 }, color: palette[i % palette.size] }
+        }.to_json
+      %>
+      <div data-controller="chart"
+           data-chart-labels-value="<%= @chart_dates.map { |d| Date.parse(d).strftime('%b %d') }.to_json %>"
+           data-chart-datasets-value="<%= datasets_json %>"
+           style="height:200px">
+        <canvas data-chart-target="canvas"></canvas>
+      </div>
+    <% else %>
+      <div data-controller="chart"
+           data-chart-labels-value="<%= @chart_dates.map { |d| Date.parse(d).strftime('%b %d') }.to_json %>"
+           data-chart-data-value="<%= @chart_dates.map { |d| (@daily_counts[Date.parse(d)] || 0) }.to_json %>"
+           style="height:200px">
+        <canvas data-chart-target="canvas"></canvas>
+      </div>
+    <% end %>
+  <% else %>
+    <p class="text-[13px] text-[#8b8ba3] py-10 text-center">No data.</p>
+  <% end %>
+</div>
+
+<!-- Group-by Breakdown -->
+<% if @group_by.present? && @group_by_breakdown.present? && @group_by_breakdown.any? %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee] mb-4">
+    <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#f0f0f5]">
+      <p class="text-[13px] font-medium text-[#1a1a2e]">Breakdown by <span class="text-[#5046e5]"><%= @group_by %></span></p>
+      <p class="text-[11px] text-[#8b8ba3]">Count</p>
+    </div>
+    <% mx = @group_by_breakdown.first.last.to_f %>
+    <% @group_by_breakdown.each do |(val, count)| %>
+      <div class="relative px-4 py-[7px] border-t border-[#f8f8fb]">
+        <div class="absolute inset-y-0 left-0 opacity-[0.07] rounded-r" style="width:<%= (count / mx * 100).round %>%; background:#5046e5"></div>
+        <div class="relative flex items-center justify-between">
+          <span class="text-[13px] text-[#2d2d42] truncate pr-3"><%= val.to_s.truncate(60) %></span>
+          <span class="text-[13px] text-[#8b8ba3] font-mono tabular-nums"><%= number_with_delimiter(count) %></span>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<!-- Multi-Property Breakdown -->
+<% if @second_group_by.present? && @multi_breakdown.present? && @multi_breakdown.any? %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee] mb-4">
+    <div class="px-4 py-2.5 border-b border-[#f0f0f5]">
+      <p class="text-[13px] font-medium text-[#1a1a2e]">Breakdown: <span class="text-[#5046e5]"><%= @group_by %></span> × <span class="text-[#5046e5]"><%= @second_group_by %></span></p>
+    </div>
+    <table class="w-full text-[12px]">
+      <thead>
+        <tr class="border-b border-[#f0f0f5] text-[11px] text-[#8b8ba3]">
+          <th class="text-left px-4 py-2 font-medium"><%= @group_by %></th>
+          <th class="text-left px-4 py-2 font-medium"><%= @second_group_by %></th>
+          <th class="text-right px-4 py-2 font-medium">Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @multi_breakdown.each do |primary_val, secondary_breakdown| %>
+          <% secondary_breakdown.each_with_index do |(secondary_val, count), idx| %>
+            <tr class="border-t border-[#f8f8fb]">
+              <% if idx == 0 %>
+                <td class="px-4 py-[6px] text-[#2d2d42] font-medium" rowspan="<%= secondary_breakdown.size %>"><%= primary_val.to_s.truncate(40) %></td>
+              <% end %>
+              <td class="px-4 py-[6px] text-[#4a4a68]"><%= secondary_val.to_s.truncate(40) %></td>
+              <td class="px-4 py-[6px] text-right text-[#8b8ba3] font-mono tabular-nums"><%= number_with_delimiter(count) %></td>
+            </tr>
+          <% end %>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
+
+<!-- CSV Export -->
+<div class="flex justify-end mb-2">
+  <%= link_to "Export CSV",
+    export_csv_project_path(@project, type: "events", from: @from, to: @to, event_name: params[:event_name], prop_key: params[:prop_key], prop_value: params[:prop_value], second_group_by: @second_group_by),
+    class: "text-[11px] text-[#8b8ba3] hover:text-[#5046e5]" %>
+</div>
+
+<!-- Events Table -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] mb-4">
+  <div class="px-4 py-2.5 border-b border-[#f0f0f5] flex items-center justify-between">
+    <p class="text-[13px] font-medium text-[#1a1a2e]">Events</p>
+    <span class="text-[11px] text-[#8b8ba3]">Showing <%= number_with_delimiter(@events.size) %> of <%= number_with_delimiter(@total_count) %></span>
+  </div>
+  <% if @events.any? %>
+    <table class="w-full">
+      <thead>
+        <tr class="border-b border-[#f0f0f5] text-[11px] text-[#8b8ba3]">
+          <th class="text-left px-4 py-2 font-medium w-[160px]">Event</th>
+          <th class="text-left px-4 py-2 font-medium w-[160px]">User</th>
+          <th class="text-left px-4 py-2 font-medium">Properties</th>
+          <th class="text-right px-4 py-2 font-medium w-[130px]">Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @events.each do |event| %>
+          <tr class="border-t border-[#f8f8fb] hover:bg-[#fafafb]">
+            <td class="px-4 py-2"><%= event_badge(event.name) %></td>
+            <td class="px-4 py-2 text-[13px] text-[#4a4a68]">
+              <% if event.user_profile %>
+                <%= link_to event.user_profile.external_id, user_profile_project_path(@project, user_profile_id: event.user_profile_id, from: @from, to: @to), class: "text-[#5046e5] hover:underline" %>
+              <% else %>
+                <span class="text-[#8b8ba3]">anonymous</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-2 text-[12px] text-[#8b8ba3] max-w-[300px]">
+              <% props = event.properties.except("anonymous_id") %>
+              <% if props.any? %>
+                <details>
+                  <summary class="cursor-pointer hover:text-[#4a4a68] truncate"><%= props.first(2).map { |k,v| "#{k}: #{v.to_s.truncate(30)}" }.join(", ") %></summary>
+                  <pre class="mt-1 text-[11px] bg-[#fafafb] rounded p-2 overflow-x-auto whitespace-pre-wrap"><%= JSON.pretty_generate(props) %></pre>
+                </details>
+              <% else %>
+                &mdash;
+              <% end %>
+            </td>
+            <td class="px-4 py-2 text-[12px] text-[#b4b4c8] text-right whitespace-nowrap"><%= event.occurred_at.strftime("%b %d %H:%M:%S") %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="flex items-center justify-between px-4 py-3 border-t border-[#f0f0f5]">
+      <span class="text-[12px] text-[#8b8ba3]">Page <%= @page %> of <%= @total_pages %></span>
+      <div class="flex gap-2">
+        <% if @page > 1 %>
+          <%= link_to "← Prev", event_explorer_project_path(@project, from: @from, to: @to, page: @page - 1, event_name: params[:event_name], prop_key: params[:prop_key], prop_value: params[:prop_value], metric: @metric, group_by: @group_by, second_group_by: @second_group_by), class: "text-[12px] text-[#5046e5] hover:underline" %>
+        <% end %>
+        <% if @has_next %>
+          <%= link_to "Next →", event_explorer_project_path(@project, from: @from, to: @to, page: @page + 1, event_name: params[:event_name], prop_key: params[:prop_key], prop_value: params[:prop_value], metric: @metric, group_by: @group_by, second_group_by: @second_group_by), class: "text-[12px] text-[#5046e5] hover:underline" %>
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <div class="p-10 text-center">
+      <svg class="w-10 h-10 mx-auto text-[#e8e8ee] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+      <p class="text-[13px] text-[#8b8ba3]">No events found for this filter.</p>
+    </div>
+  <% end %>
+</div>

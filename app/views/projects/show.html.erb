@@ -1,0 +1,200 @@
+<%= turbo_stream_from "project_#{@project.id}_events" %>
+
+<%
+  def pct(curr, prev)
+    return nil if prev == 0 && curr == 0; return 100.0 if prev == 0
+    ((curr - prev).to_f / prev * 100).round(1)
+  end
+  def dur(s); m, s = s.to_i.divmod(60); m > 0 ? "#{m}m #{s}s" : "#{s}s"; end
+%>
+
+<%= render "projects/page_header",
+  title: @project.name, subtitle: @project.url, back_path: root_path,
+  date_form_url: project_path(@project), from: @from, to: @to,
+  project: @project, active_tab: "Analytics",
+  extra_right: link_to("Keys", api_keys_project_path(@project), class: "bg-white rounded-lg border border-[#e8e8ee] px-3 py-[5px] text-[12px] text-[#4a4a68] hover:bg-[#fafafb]") %>
+
+<% if @active_anomalies.present? && @active_anomalies.any? %>
+  <!-- Anomaly Alert Banner -->
+  <%= link_to anomalies_project_path(@project), class: "block bg-[#fef2f2] border border-[#fecaca] rounded-xl p-3 mb-4 hover:bg-[#fef2f2]/80 transition-colors" do %>
+    <div class="flex items-center gap-3">
+      <span class="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse flex-shrink-0"></span>
+      <p class="text-[13px] font-medium text-[#991b1b]"><%= @active_anomalies.size %> active anomal<%= @active_anomalies.size == 1 ? 'y' : 'ies' %>:</p>
+      <p class="text-[12px] text-[#991b1b] truncate"><%= @active_anomalies.first.description %></p>
+      <span class="text-[11px] text-[#991b1b] ml-auto flex-shrink-0">View all &rarr;</span>
+    </div>
+  <% end %>
+<% end %>
+
+<!-- KPI Row -->
+<%
+  kpis = [
+    { label: "Unique Visitors", val: @visitors, prev: @prev_visitors },
+    { label: "Pageviews", val: @pageviews, prev: @prev_pageviews },
+    { label: "Sessions", val: @sessions, prev: @prev_sessions },
+    { label: "Events", val: @custom_events, prev: @prev_custom_events },
+    { label: "Avg Duration", val: nil, display: dur(@avg_duration) },
+    { label: "Bounce Rate", val: nil, display: "#{@bounce_rate}%" },
+  ]
+%>
+<div class="bg-white rounded-xl border border-[#e8e8ee] mb-4 grid grid-cols-6 divide-x divide-[#f0f0f5]">
+  <% kpis.each do |k| %>
+    <div class="px-4 py-3">
+      <p class="text-[11px] text-[#8b8ba3] font-medium"><%= k[:label] %></p>
+      <div class="flex items-baseline gap-2 mt-1">
+        <span class="text-[20px] font-semibold text-[#1a1a2e] leading-none tabular-nums"><%= k[:display] || number_with_delimiter(k[:val]) %></span>
+        <% if k[:prev] %>
+          <% c = pct(k[:val], k[:prev]) %>
+          <% unless c.nil? %>
+            <span class="text-[11px] font-medium leading-none <%= c >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]' %>"><%= c >= 0 ? "+#{c}" : c %>%</span>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<!-- Autocapture Row -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] mb-4 grid grid-cols-5 divide-x divide-[#f0f0f5]">
+  <% [
+    ["Clicks", @click_count, nil],
+    ["Rage Clicks", @rage_clicks, @rage_clicks > 0 ? "#ef4444" : nil],
+    ["Dead Clicks", @dead_clicks, @dead_clicks > 0 ? "#f59e0b" : nil],
+    ["Form Submits", @form_submits, nil],
+  ].each do |label, val, color| %>
+    <div class="px-4 py-3">
+      <p class="text-[11px] text-[#8b8ba3] font-medium"><%= label %></p>
+      <span class="text-[18px] font-semibold leading-none mt-1 block tabular-nums" style="<%= "color:#{color}" if color %>; <%= "color:#1a1a2e" unless color %>"><%= number_with_delimiter(val) %></span>
+    </div>
+  <% end %>
+    <div class="px-4 py-3">
+      <p class="text-[11px] text-[#8b8ba3] font-medium"><%= link_to "JS Errors", errors_project_path(@project, from: @from, to: @to), class: "hover:text-[#5046e5]" %></p>
+      <%= link_to errors_project_path(@project, from: @from, to: @to), class: "block" do %>
+        <span class="text-[18px] font-semibold leading-none mt-1 block tabular-nums" style="color:<%= @js_errors > 0 ? '#ef4444' : '#1a1a2e' %>"><%= number_with_delimiter(@js_errors) %></span>
+        <% sparkline_data = (@from..@to).map { |d| @daily_errors_sparkline[d] || 0 } %>
+        <% if sparkline_data.any? { |v| v > 0 } %>
+          <% max_v = sparkline_data.max.to_f; max_v = 1 if max_v == 0 %>
+          <% points = sparkline_data.each_with_index.map { |v, i| "#{(i.to_f / [sparkline_data.size - 1, 1].max * 60).round(1)},#{(16 - v / max_v * 14).round(1)}" }.join(" ") %>
+          <svg class="mt-1" width="60" height="18" viewBox="0 0 60 18"><polyline points="<%= points %>" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <% end %>
+      <% end %>
+    </div>
+</div>
+
+<!-- Chart -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] p-5 mb-4">
+  <div class="flex items-center justify-between mb-4">
+    <p class="text-[13px] font-medium text-[#1a1a2e]">Traffic & Events</p>
+    <div class="flex items-center gap-5">
+      <span class="flex items-center gap-1.5 text-[11px] text-[#8b8ba3]"><span class="inline-block w-2 h-2 rounded-full bg-[#5046e5]"></span>Pageviews</span>
+      <span class="flex items-center gap-1.5 text-[11px] text-[#8b8ba3]"><span class="inline-block w-2 h-2 rounded-full bg-[#a78bfa]"></span>Events</span>
+    </div>
+  </div>
+  <% if @chart_dates.any? %>
+    <div data-controller="chart"
+         data-chart-labels-value="<%= @chart_dates.map { |d| Date.parse(d).strftime('%b %d') }.to_json %>"
+         data-chart-data-value="<%= @chart_dates.map { |d| (@daily_pageviews[Date.parse(d)] || 0) }.to_json %>"
+         data-chart-data2-value="<%= @chart_dates.map { |d| (@daily_custom[Date.parse(d)] || 0) }.to_json %>"
+         style="height:200px">
+      <canvas data-chart-target="canvas"></canvas>
+    </div>
+  <% else %>
+    <p class="text-[13px] text-[#8b8ba3] py-10 text-center">No data.</p>
+  <% end %>
+</div>
+
+<!-- 2-col: Pages + Events -->
+<div class="grid grid-cols-2 gap-4 mb-4">
+  <% [
+    ["Top Pages", @top_pages, "Views", "#5046e5"],
+    ["Top Events", @top_custom_events, "Count", "#a78bfa"],
+  ].each do |title, data, col_label, color| %>
+    <div class="bg-white rounded-xl border border-[#e8e8ee]">
+      <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#f0f0f5]">
+        <p class="text-[13px] font-medium text-[#1a1a2e]"><%= title %></p>
+        <p class="text-[11px] text-[#8b8ba3]"><%= col_label %></p>
+      </div>
+      <% if data.any? %>
+        <% mx = data.first.last.to_f %>
+        <% data.each do |(name, count)| %>
+          <div class="relative px-4 py-[7px] border-t border-[#f8f8fb]">
+            <div class="absolute inset-y-0 left-0 opacity-[0.07] rounded-r" style="width:<%= (count / mx * 100).round %>%; background:<%= color %>"></div>
+            <div class="relative flex items-center justify-between">
+              <span class="text-[13px] text-[#2d2d42] truncate pr-3"><%= name %></span>
+              <span class="text-[13px] text-[#8b8ba3] font-mono tabular-nums"><%= number_with_delimiter(count) %></span>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="text-[13px] text-[#8b8ba3] p-4 text-center">No data.</p>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<!-- 3-col: Referrers + Users + Top Clicked -->
+<div class="grid grid-cols-3 gap-4 mb-4">
+  <% [
+    ["Referrers", @top_referrers, "Visits"],
+    ["Active Users", nil, "Last seen"],
+    ["Top Clicked", @top_clicks, "Clicks"],
+  ].each do |title, data, col_label| %>
+    <div class="bg-white rounded-xl border border-[#e8e8ee]">
+      <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#f0f0f5]">
+        <p class="text-[13px] font-medium text-[#1a1a2e]"><%= title %></p>
+        <p class="text-[11px] text-[#8b8ba3]"><%= col_label %></p>
+      </div>
+      <% if title == "Active Users" %>
+        <% if @active_users.any? %>
+          <% @active_users.each do |user| %>
+            <div class="flex items-center justify-between px-4 py-[7px] border-t border-[#f8f8fb]">
+              <div class="flex items-center gap-2 min-w-0">
+                <div class="w-6 h-6 rounded-full bg-[#5046e5]/10 flex items-center justify-center flex-shrink-0">
+                  <span class="text-[10px] font-semibold text-[#5046e5]"><%= user.external_id[0].upcase %></span>
+                </div>
+                <%= link_to user.external_id, user_profile_project_path(@project, user_profile_id: user.id, from: @from, to: @to), class: "text-[13px] text-[#2d2d42] truncate hover:text-[#5046e5]" %>
+              </div>
+              <span class="text-[12px] text-[#8b8ba3] whitespace-nowrap"><%= time_ago_in_words(user.last_seen_at) %></span>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="text-[13px] text-[#8b8ba3] p-4 text-center">No users.</p>
+        <% end %>
+      <% else %>
+        <% if data&.any? %>
+          <% data.each do |(name, count)| %>
+            <div class="flex items-center justify-between px-4 py-[7px] border-t border-[#f8f8fb]">
+              <span class="text-[13px] text-[#2d2d42] truncate pr-3"><%= name.to_s.truncate(35) %></span>
+              <span class="text-[13px] text-[#8b8ba3] font-mono tabular-nums"><%= count %></span>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="text-[13px] text-[#8b8ba3] p-4 text-center">No data.</p>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<!-- Live Feed -->
+<div class="bg-white rounded-xl border border-[#e8e8ee]">
+  <div class="flex items-center gap-2 px-4 py-2.5 border-b border-[#f0f0f5]">
+    <span class="relative flex h-[6px] w-[6px]"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#22c55e] opacity-75"></span><span class="relative inline-flex rounded-full h-[6px] w-[6px] bg-[#22c55e]"></span></span>
+    <p class="text-[13px] font-medium text-[#1a1a2e]">Live Feed</p>
+  </div>
+  <table class="w-full">
+    <thead>
+      <tr class="border-b border-[#f0f0f5] text-[11px] text-[#8b8ba3]">
+        <th class="text-left px-4 py-2 font-medium w-[140px]">Event</th>
+        <th class="text-left px-4 py-2 font-medium w-[180px]">User</th>
+        <th class="text-left px-4 py-2 font-medium">Detail</th>
+        <th class="text-right px-4 py-2 font-medium w-[100px]">Time</th>
+      </tr>
+    </thead>
+    <tbody id="live-feed-body">
+      <% @recent_events.each do |event| %>
+        <%= render "events/row", event: event %>
+      <% end %>
+    </tbody>
+  </table>
+</div>

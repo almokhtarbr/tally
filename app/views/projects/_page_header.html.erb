@@ -1,0 +1,39 @@
+<%
+  # Local variables:
+  #   title (string), subtitle (string, optional), back_path (string),
+  #   date_form_url (string, optional - nil to hide date picker),
+  #   extra_hidden_fields (hash, optional),
+  #   active_tab (string, optional), project (Project),
+  #   from (Date, optional), to (Date, optional), extra_right (string, optional)
+  subtitle ||= nil
+  extra_hidden_fields ||= {}
+  active_tab ||= nil
+  extra_right ||= nil
+  date_form_url = local_assigns[:date_form_url]
+  from = local_assigns[:from]
+  to = local_assigns[:to]
+%>
+
+<div class="flex items-center justify-between mb-5">
+  <div class="flex items-center gap-2">
+    <%= link_to back_path, class: "text-[#c4c4d4] hover:text-[#8b8ba3]" do %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    <% end %>
+    <h1 class="text-[15px] font-semibold text-[#1a1a2e]"><%= title %></h1>
+    <% if subtitle %>
+      <span class="text-[12px] text-[#8b8ba3]"><%= subtitle %></span>
+    <% end %>
+  </div>
+  <div class="flex items-center gap-2">
+    <% if date_form_url && from && to %>
+      <%= render "projects/date_picker", form_url: date_form_url, from: from, to: to, extra_hidden_fields: extra_hidden_fields %>
+    <% end %>
+    <% if extra_right %>
+      <%= extra_right.html_safe %>
+    <% end %>
+  </div>
+</div>
+
+<% if active_tab %>
+  <%= render "projects/project_tabs", project: project, from: from || 7.days.ago.to_date, to: to || Date.current, active_tab: active_tab %>
+<% end %>

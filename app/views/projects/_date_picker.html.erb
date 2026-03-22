@@ -1,0 +1,54 @@
+<%
+  # Local variables: form_url, from, to, extra_hidden_fields (hash, optional)
+  extra_hidden_fields ||= {}
+  today = Date.current
+  presets = {
+    "7d" => 7.days.ago.to_date,
+    "14d" => 14.days.ago.to_date,
+    "30d" => 30.days.ago.to_date,
+    "90d" => 90.days.ago.to_date,
+  }
+  active_preset = presets.find { |_, v| v == from && to == today }&.first
+
+  # Build base URL for presets from form_url
+  preset_base_params = extra_hidden_fields.dup
+%>
+
+<div class="flex items-center gap-1.5">
+  <div class="flex items-center bg-white rounded-lg border border-[#e8e8ee] overflow-hidden">
+    <% presets.each do |label, preset_from| %>
+      <%
+        active = label == active_preset
+        # Build query string for preset link
+        preset_query = preset_base_params.merge(from: preset_from, to: today)
+        separator = form_url.include?("?") ? "&" : "?"
+        query_parts = preset_query.flat_map { |k, v|
+          if v.is_a?(Array)
+            v.map { |item| "#{CGI.escape(k.to_s)}%5B%5D=#{CGI.escape(item.to_s)}" }
+          else
+            ["#{CGI.escape(k.to_s)}=#{CGI.escape(v.to_s)}"]
+          end
+        }
+        preset_url = "#{form_url}#{separator}#{query_parts.join('&')}"
+      %>
+      <%= link_to label, preset_url,
+          class: "px-2.5 py-[5px] text-[11px] font-medium #{active ? 'bg-[#5046e5] text-white' : 'text-[#8b8ba3] hover:text-[#4a4a68] hover:bg-[#fafafb]'}" %>
+    <% end %>
+  </div>
+
+  <%= form_with url: form_url, method: :get, class: "flex items-center gap-1.5 bg-white rounded-lg border border-[#e8e8ee] px-3 py-[5px]", data: { turbo_frame: "_top" } do %>
+    <% extra_hidden_fields.each do |key, value| %>
+      <% if value.is_a?(Array) %>
+        <% value.each do |v| %>
+          <input type="hidden" name="<%= key %>[]" value="<%= v %>">
+        <% end %>
+      <% else %>
+        <input type="hidden" name="<%= key %>" value="<%= value %>">
+      <% end %>
+    <% end %>
+    <input type="date" name="from" value="<%= from %>" class="!w-[110px] !bg-transparent !border-0 !p-0 !text-[12px] text-[#4a4a68] !shadow-none !ring-0 focus:!ring-0">
+    <span class="text-[#c4c4d4] text-[11px]">&ndash;</span>
+    <input type="date" name="to" value="<%= to %>" class="!w-[110px] !bg-transparent !border-0 !p-0 !text-[12px] text-[#4a4a68] !shadow-none !ring-0 focus:!ring-0">
+    <button type="submit" class="bg-[#5046e5] text-white text-[11px] font-medium px-2.5 py-[3px] rounded-md hover:bg-[#4338ca]">Apply</button>
+  <% end %>
+</div>

@@ -1,0 +1,41 @@
+<div class="min-h-screen bg-[#fafafb] flex items-center justify-center">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-6">
+      <h1 class="text-[22px] font-bold text-[#1a1a2e]">Tally</h1>
+      <p class="text-[13px] text-[#8b8ba3] mt-1">Create your admin account to get started</p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-[#e8e8ee] p-6">
+      <% if @user.errors.any? %>
+        <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+          <% @user.errors.full_messages.each do |msg| %>
+            <p class="text-[12px] text-red-700"><%= msg %></p>
+          <% end %>
+        </div>
+      <% end %>
+
+      <%= form_with model: @user, url: setup_path, method: :post, class: "space-y-4" do |f| %>
+        <div>
+          <label class="text-[12px] text-[#4a4a68] font-medium block mb-1">Name</label>
+          <%= f.text_field :name, required: true, autofocus: true, class: "w-full text-[13px] text-[#2d2d42] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-3 py-2", placeholder: "Your name" %>
+        </div>
+        <div>
+          <label class="text-[12px] text-[#4a4a68] font-medium block mb-1">Email</label>
+          <%= f.email_field :email, required: true, class: "w-full text-[13px] text-[#2d2d42] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-3 py-2", placeholder: "you@example.com" %>
+        </div>
+        <div>
+          <label class="text-[12px] text-[#4a4a68] font-medium block mb-1">Password</label>
+          <%= f.password_field :password, required: true, class: "w-full text-[13px] text-[#2d2d42] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-3 py-2" %>
+        </div>
+        <div>
+          <label class="text-[12px] text-[#4a4a68] font-medium block mb-1">Confirm Password</label>
+          <%= f.password_field :password_confirmation, required: true, class: "w-full text-[13px] text-[#2d2d42] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-3 py-2" %>
+        </div>
+
+        <%= f.submit "Create Account", class: "w-full bg-[#5046e5] text-white text-[13px] font-medium py-2.5 rounded-md hover:bg-[#4338ca] cursor-pointer" %>
+      <% end %>
+    </div>
+
+    <p class="text-[11px] text-[#b0b0c0] text-center mt-4">This will be the admin account for your Tally instance.</p>
+  </div>
+</div>

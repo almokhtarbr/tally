@@ -1,0 +1,68 @@
+<div class="flex items-center gap-2 mb-8">
+  <%= link_to @project, class: "text-gray-400 hover:text-gray-600" do %>
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+  <% end %>
+  <h1 class="text-xl font-semibold text-gray-900">API Keys</h1>
+  <span class="text-sm text-gray-400">— <%= @project.name %></span>
+</div>
+
+<div class="max-w-2xl space-y-4">
+
+  <!-- API Key -->
+  <div class="rounded-lg bg-white border border-gray-200 p-5">
+    <div class="flex items-center gap-2 mb-1">
+      <span class="inline-flex rounded bg-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-green-600 uppercase">Public</span>
+      <h2 class="text-sm font-medium text-gray-700">API Key</h2>
+    </div>
+    <p class="text-xs text-gray-400 mb-3">Safe for client-side. Can only write events.</p>
+    <div class="rounded-md bg-gray-50 border border-gray-100 px-3 py-2.5">
+      <code class="text-sm text-gray-800 select-all"><%= @project.api_key %></code>
+    </div>
+  </div>
+
+  <!-- API Secret -->
+  <div class="rounded-lg bg-white border border-gray-200 p-5">
+    <div class="flex items-center gap-2 mb-1">
+      <span class="inline-flex rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 uppercase">Secret</span>
+      <h2 class="text-sm font-medium text-gray-700">API Secret</h2>
+    </div>
+    <p class="text-xs text-gray-400 mb-3">Server-side only. Used to query data. Never expose in client code.</p>
+    <div class="rounded-md bg-gray-50 border border-gray-100 px-3 py-2.5">
+      <code class="text-sm text-gray-800 select-all"><%= @project.api_secret %></code>
+    </div>
+  </div>
+
+  <!-- Quick Start -->
+  <div class="rounded-lg bg-white border border-indigo-200 p-5">
+    <h2 class="text-sm font-semibold text-gray-900 mb-4">Quick Start</h2>
+
+    <div class="space-y-4">
+      <div>
+        <p class="text-xs font-medium text-gray-500 mb-1.5">Ruby</p>
+        <pre class="rounded-md bg-gray-50 border border-gray-100 px-3 py-2.5 text-xs text-gray-700 overflow-x-auto">TallyAnalytics.configure do |c|
+  c.api_key  = "<%= @project.api_key %>"
+  c.endpoint = "<%= request.base_url %>"
+end
+
+TallyAnalytics.track("user@email.com", "event-name")</pre>
+      </div>
+
+      <div>
+        <p class="text-xs font-medium text-gray-500 mb-1.5">JavaScript</p>
+        <pre class="rounded-md bg-gray-50 border border-gray-100 px-3 py-2.5 text-xs text-gray-700 overflow-x-auto">&lt;script src="<%= request.base_url %>/sdk/tally.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  tally('init', '<%= @project.api_key %>');
+  tally('track', 'page-view');
+&lt;/script&gt;</pre>
+      </div>
+
+      <div>
+        <p class="text-xs font-medium text-gray-500 mb-1.5">curl</p>
+        <pre class="rounded-md bg-gray-50 border border-gray-100 px-3 py-2.5 text-xs text-gray-700 overflow-x-auto">curl -X POST <%= request.base_url %>/api/v1/track \
+  -H "X-API-Key: <%= @project.api_key %>" \
+  -H "Content-Type: application/json" \
+  -d '{"event":"test","user_id":"me@test.com"}'</pre>
+      </div>
+    </div>
+  </div>
+</div>

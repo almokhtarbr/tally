@@ -1,0 +1,13 @@
+{
+  "name": "tally-analytics",
+  "version": "0.1.0",
+  "description": "Node.js SDK for Tally Analytics — self-hosted product analytics",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "license": "MIT",
+  "keywords": ["analytics", "tally", "product-analytics", "self-hosted"],
+  "files": ["index.js", "index.d.ts"],
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

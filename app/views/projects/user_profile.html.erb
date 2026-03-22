@@ -1,0 +1,217 @@
+<%
+  last_active_ago = @user.last_seen_at ? "Last active #{time_ago_in_words(@user.last_seen_at)} ago" : nil
+%>
+
+<!-- Header -->
+<div class="flex items-center justify-between mb-5">
+  <div class="flex items-center gap-2">
+    <%= link_to :back, class: "text-[#c4c4d4] hover:text-[#8b8ba3]" do %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    <% end %>
+    <div class="w-8 h-8 rounded-full bg-[#5046e5]/10 flex items-center justify-center flex-shrink-0">
+      <span class="text-[13px] font-semibold text-[#5046e5]"><%= @user.external_id[0].upcase %></span>
+    </div>
+    <h1 class="text-[15px] font-semibold text-[#1a1a2e]"><%= @user.external_id %></h1>
+    <span class="text-[12px] text-[#8b8ba3]"><%= @project.name %></span>
+    <% if last_active_ago %>
+      <span class="text-[11px] text-[#22c55e] bg-[#22c55e]/10 rounded-md px-2 py-[2px] font-medium"><%= last_active_ago %></span>
+    <% end %>
+  </div>
+  <div class="flex items-center gap-2">
+    <%= render "projects/date_picker",
+      form_url: user_profile_project_path(@project),
+      from: @from, to: @to,
+      extra_hidden_fields: { user_profile_id: @user.id } %>
+  </div>
+</div>
+
+<!-- User Properties -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] mb-4">
+  <div class="px-4 py-2.5 border-b border-[#f0f0f5]">
+    <p class="text-[13px] font-medium text-[#1a1a2e]">User Properties</p>
+  </div>
+  <div class="divide-y divide-[#f8f8fb]">
+    <div class="flex items-center justify-between px-4 py-[7px]">
+      <span class="text-[12px] text-[#8b8ba3]">First Seen</span>
+      <span class="text-[13px] text-[#2d2d42]"><%= @user.first_seen_at&.strftime("%b %d, %Y %H:%M") || "—" %></span>
+    </div>
+    <div class="flex items-center justify-between px-4 py-[7px]">
+      <span class="text-[12px] text-[#8b8ba3]">Last Seen</span>
+      <span class="text-[13px] text-[#2d2d42]"><%= @user.last_seen_at&.strftime("%b %d, %Y %H:%M") || "—" %></span>
+    </div>
+    <% @user.properties.each do |key, value| %>
+      <div class="flex items-center justify-between px-4 py-[7px]">
+        <span class="text-[12px] text-[#8b8ba3]"><%= key %></span>
+        <span class="text-[13px] text-[#2d2d42] truncate max-w-[300px]"><%= value %></span>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- KPI Row -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] mb-4 grid grid-cols-4 divide-x divide-[#f0f0f5]">
+  <% [
+    ["Total Events", @total_events],
+    ["Events (range)", @events_in_range],
+    ["Sessions", @sessions_count],
+    ["First Seen", @user.first_seen_at&.strftime("%b %d, %Y") || "—"],
+  ].each do |label, val| %>
+    <div class="px-4 py-3">
+      <p class="text-[11px] text-[#8b8ba3] font-medium"><%= label %></p>
+      <span class="text-[20px] font-semibold text-[#1a1a2e] leading-none mt-1 block tabular-nums"><%= val.is_a?(Integer) ? number_with_delimiter(val) : val %></span>
+    </div>
+  <% end %>
+</div>
+
+<!-- Activity Chart -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] p-5 mb-4">
+  <div class="flex items-center justify-between mb-4">
+    <p class="text-[13px] font-medium text-[#1a1a2e]">Activity</p>
+    <span class="flex items-center gap-1.5 text-[11px] text-[#8b8ba3]"><span class="inline-block w-2 h-2 rounded-full bg-[#5046e5]"></span>Events</span>
+  </div>
+  <% if @chart_dates.any? %>
+    <div data-controller="chart"
+         data-chart-labels-value="<%= @chart_dates.map { |d| Date.parse(d).strftime('%b %d') }.to_json %>"
+         data-chart-data-value="<%= @chart_dates.map { |d| (@daily_activity[Date.parse(d)] || 0) }.to_json %>"
+         style="height:180px">
+      <canvas data-chart-target="canvas"></canvas>
+    </div>
+  <% else %>
+    <p class="text-[13px] text-[#8b8ba3] py-10 text-center">No data.</p>
+  <% end %>
+</div>
+
+<!-- Recent Sessions -->
+<% if @recent_sessions.any? %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee] mb-4">
+    <div class="px-4 py-2.5 border-b border-[#f0f0f5]">
+      <p class="text-[13px] font-medium text-[#1a1a2e]">Recent Sessions</p>
+    </div>
+    <div class="divide-y divide-[#f0f0f5]">
+      <% @recent_sessions.each do |session| %>
+        <details class="group">
+          <summary class="px-4 py-2.5 cursor-pointer hover:bg-[#fafafb] flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <svg class="w-3.5 h-3.5 text-[#c4c4d4] group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              <span class="text-[13px] text-[#2d2d42]"><%= session[:started_at].strftime("%b %d, %H:%M:%S") %></span>
+              <% if session[:duration] %>
+                <span class="text-[11px] text-[#8b8ba3] bg-[#fafafb] rounded px-1.5 py-0.5"><%= format_duration(session[:duration]) %></span>
+              <% end %>
+              <% if session[:pages_viewed] %>
+                <span class="text-[11px] text-[#8b8ba3]"><%= session[:pages_viewed] %> pages</span>
+              <% end %>
+            </div>
+            <span class="text-[11px] text-[#8b8ba3] font-mono tabular-nums"><%= session[:events_count] %> events</span>
+          </summary>
+          <div class="px-4 pb-3 pt-1 ml-7">
+            <% session[:events].each do |event| %>
+              <div class="flex items-center gap-2 py-1">
+                <%= event_badge(event.name) %>
+                <span class="text-[12px] text-[#8b8ba3] truncate"><%= event.properties.except("anonymous_id").first(2).map { |k,v| "#{k}: #{v.to_s.truncate(25)}" }.join(", ") %></span>
+                <span class="text-[11px] text-[#c4c4d4] ml-auto whitespace-nowrap"><%= event.occurred_at.strftime("%H:%M:%S") %></span>
+              </div>
+            <% end %>
+          </div>
+        </details>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<!-- Event Breakdown -->
+<% if @event_breakdown.any? %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee] mb-4">
+    <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#f0f0f5]">
+      <p class="text-[13px] font-medium text-[#1a1a2e]">Top Events</p>
+      <p class="text-[11px] text-[#8b8ba3]">Count</p>
+    </div>
+    <% mx = @event_breakdown.first.last.to_f %>
+    <% @event_breakdown.each do |(name, count)| %>
+      <div class="relative px-4 py-[7px] border-t border-[#f8f8fb]">
+        <div class="absolute inset-y-0 left-0 opacity-[0.07] rounded-r" style="width:<%= (count / mx * 100).round %>%; background:#5046e5"></div>
+        <div class="relative flex items-center justify-between">
+          <span class="text-[13px] text-[#2d2d42]"><%= name %></span>
+          <span class="text-[13px] text-[#8b8ba3] font-mono tabular-nums"><%= number_with_delimiter(count) %></span>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<!-- Timeline -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] mb-4">
+  <div class="px-4 py-2.5 border-b border-[#f0f0f5]">
+    <p class="text-[13px] font-medium text-[#1a1a2e]">Event Timeline</p>
+  </div>
+  <% if @timeline_events.any? %>
+    <div class="divide-y divide-[#f8f8fb]">
+      <% @grouped_timeline.each do |group| %>
+        <% if group[:type] == :session %>
+          <% s = group[:session] %>
+          <div class="border-l-2 border-[#5046e5]/20 ml-4">
+            <div class="px-4 py-2 flex items-center gap-2 bg-[#fafafb]">
+              <svg class="w-3.5 h-3.5 text-[#22c55e]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+              <span class="text-[11px] font-medium text-[#22c55e]">Session</span>
+              <span class="text-[11px] text-[#8b8ba3]"><%= s[:start].occurred_at.strftime("%b %d %H:%M:%S") %></span>
+              <% if s[:end] %>
+                <% dur = s[:end].properties["duration_seconds"]&.to_i %>
+                <% if dur %>
+                  <span class="text-[11px] text-[#8b8ba3] bg-white rounded px-1.5 py-0.5 border border-[#e8e8ee]"><%= format_duration(dur) %></span>
+                <% end %>
+                <% pv = s[:end].properties["pages_viewed"]&.to_i %>
+                <% if pv %>
+                  <span class="text-[11px] text-[#8b8ba3]"><%= pv %> pages</span>
+                <% end %>
+              <% end %>
+            </div>
+            <% s[:events].each do |event| %>
+              <div class="px-4 py-2 flex items-start gap-3 hover:bg-[#fafafb] pl-8">
+                <%= event_badge(event.name) %>
+                <div class="flex-1 min-w-0">
+                  <% props = event.properties.except("anonymous_id") %>
+                  <% if props.any? %>
+                    <details>
+                      <summary class="cursor-pointer text-[12px] text-[#8b8ba3] hover:text-[#4a4a68] truncate"><%= props.first(2).map { |k,v| "#{k}: #{v.to_s.truncate(30)}" }.join(", ") %></summary>
+                      <pre class="mt-1 text-[11px] bg-[#fafafb] rounded p-2 overflow-x-auto whitespace-pre-wrap"><%= JSON.pretty_generate(props) %></pre>
+                    </details>
+                  <% end %>
+                </div>
+                <span class="text-[12px] text-[#b4b4c8] whitespace-nowrap flex-shrink-0"><%= event.occurred_at.strftime("%H:%M:%S") %></span>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <% event = group[:event] %>
+          <div class="px-4 py-2 flex items-start gap-3 hover:bg-[#fafafb]">
+            <%= event_badge(event.name) %>
+            <div class="flex-1 min-w-0">
+              <% props = event.properties.except("anonymous_id") %>
+              <% if props.any? %>
+                <details>
+                  <summary class="cursor-pointer text-[12px] text-[#8b8ba3] hover:text-[#4a4a68] truncate"><%= props.first(2).map { |k,v| "#{k}: #{v.to_s.truncate(30)}" }.join(", ") %></summary>
+                  <pre class="mt-1 text-[11px] bg-[#fafafb] rounded p-2 overflow-x-auto whitespace-pre-wrap"><%= JSON.pretty_generate(props) %></pre>
+                </details>
+              <% end %>
+            </div>
+            <span class="text-[12px] text-[#b4b4c8] whitespace-nowrap flex-shrink-0"><%= event.occurred_at.strftime("%b %d %H:%M:%S") %></span>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex items-center justify-between px-4 py-3 border-t border-[#f0f0f5]">
+      <span class="text-[12px] text-[#8b8ba3]">Page <%= @page %></span>
+      <div class="flex gap-2">
+        <% if @page > 1 %>
+          <%= link_to "← Prev", user_profile_project_path(@project, user_profile_id: @user.id, from: @from, to: @to, page: @page - 1), class: "text-[12px] text-[#5046e5] hover:underline" %>
+        <% end %>
+        <% if @has_next %>
+          <%= link_to "Next →", user_profile_project_path(@project, user_profile_id: @user.id, from: @from, to: @to, page: @page + 1), class: "text-[12px] text-[#5046e5] hover:underline" %>
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <p class="text-[13px] text-[#8b8ba3] p-6 text-center">No events in this period.</p>
+  <% end %>
+</div>

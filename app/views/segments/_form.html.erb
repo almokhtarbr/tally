@@ -1,0 +1,72 @@
+<div class="bg-white rounded-xl border border-[#e8e8ee] p-5 max-w-2xl">
+  <%= form_with model: [project, segment], class: "space-y-4" do |f| %>
+    <% if segment.errors.any? %>
+      <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+        <% segment.errors.full_messages.each do |msg| %>
+          <p class="text-[12px] text-red-700"><%= msg %></p>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div>
+      <label class="text-[12px] text-[#4a4a68] font-medium block mb-1">Name</label>
+      <%= f.text_field :name, class: "w-full text-[13px] text-[#2d2d42] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-3 py-2", placeholder: "e.g., Power Users" %>
+    </div>
+
+    <div>
+      <label class="text-[12px] text-[#4a4a68] font-medium block mb-1">Description (optional)</label>
+      <%= f.text_area :description, rows: 2, class: "w-full text-[13px] text-[#2d2d42] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-3 py-2", placeholder: "What does this segment represent?" %>
+    </div>
+
+    <div>
+      <label class="text-[12px] text-[#4a4a68] font-medium block mb-2">Conditions</label>
+      <p class="text-[11px] text-[#8b8ba3] mb-3">All conditions must match (AND logic).</p>
+
+      <div id="conditions-list" class="space-y-2">
+        <% conditions = segment.conditions.presence || [{}] %>
+        <% conditions.each_with_index do |cond, idx| %>
+          <div class="flex items-center gap-2 flex-wrap bg-[#fafafb] rounded-lg p-2.5 border border-[#e8e8ee]">
+            <select name="segment[conditions][][type]" class="text-[12px] text-[#4a4a68] bg-white border border-[#e8e8ee] rounded-md px-2 py-[5px]">
+              <option value="event" <%= "selected" if cond["type"] == "event" %>>User did event</option>
+              <option value="property" <%= "selected" if cond["type"] == "property" %>>User property</option>
+            </select>
+
+            <input type="text" name="segment[conditions][][event]" value="<%= cond["event"] %>" placeholder="event name" list="seg_events_<%= idx %>" class="text-[12px] text-[#4a4a68] bg-white border border-[#e8e8ee] rounded-md px-2 py-[5px] w-[140px]">
+            <datalist id="seg_events_<%= idx %>">
+              <% available_events.each do |e| %><option value="<%= e %>"><% end %>
+            </datalist>
+
+            <select name="segment[conditions][][operator]" class="text-[12px] text-[#4a4a68] bg-white border border-[#e8e8ee] rounded-md px-2 py-[5px]">
+              <option value="did" <%= "selected" if cond["operator"] == "did" %>>did</option>
+              <option value="did_not" <%= "selected" if cond["operator"] == "did_not" %>>did not</option>
+              <option value="did_at_least" <%= "selected" if cond["operator"] == "did_at_least" %>>did at least</option>
+              <option value="equals" <%= "selected" if cond["operator"] == "equals" %>>equals</option>
+              <option value="not_equals" <%= "selected" if cond["operator"] == "not_equals" %>>not equals</option>
+              <option value="contains" <%= "selected" if cond["operator"] == "contains" %>>contains</option>
+              <option value="is_set" <%= "selected" if cond["operator"] == "is_set" %>>is set</option>
+              <option value="is_not_set" <%= "selected" if cond["operator"] == "is_not_set" %>>is not set</option>
+            </select>
+
+            <input type="text" name="segment[conditions][][key]" value="<%= cond["key"] %>" placeholder="prop key" list="seg_props_<%= idx %>" class="text-[12px] text-[#4a4a68] bg-white border border-[#e8e8ee] rounded-md px-2 py-[5px] w-[100px]">
+            <datalist id="seg_props_<%= idx %>">
+              <% available_user_properties.each do |p| %><option value="<%= p %>"><% end %>
+            </datalist>
+
+            <input type="text" name="segment[conditions][][value]" value="<%= cond["value"] %>" placeholder="value" class="text-[12px] text-[#4a4a68] bg-white border border-[#e8e8ee] rounded-md px-2 py-[5px] w-[100px]">
+
+            <input type="number" name="segment[conditions][][days]" value="<%= cond["days"] %>" placeholder="days" class="text-[12px] text-[#4a4a68] bg-white border border-[#e8e8ee] rounded-md px-2 py-[5px] w-[60px]">
+
+            <input type="number" name="segment[conditions][][count]" value="<%= cond["count"] %>" placeholder="#" class="text-[12px] text-[#4a4a68] bg-white border border-[#e8e8ee] rounded-md px-2 py-[5px] w-[50px]">
+          </div>
+        <% end %>
+      </div>
+
+      <p class="text-[11px] text-[#8b8ba3] mt-2">To add more conditions, save and edit again.</p>
+    </div>
+
+    <div class="flex items-center gap-3 pt-2">
+      <%= f.submit segment.persisted? ? "Update Segment" : "Create Segment", class: "bg-[#5046e5] text-white text-[12px] font-medium px-4 py-[6px] rounded-md hover:bg-[#4338ca] cursor-pointer" %>
+      <%= link_to "Cancel", project_segments_path(project), class: "text-[12px] text-[#8b8ba3] hover:text-[#4a4a68]" %>
+    </div>
+  <% end %>
+</div>

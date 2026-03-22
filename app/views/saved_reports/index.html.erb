@@ -1,0 +1,25 @@
+<%= render "projects/page_header",
+  title: @project.name, subtitle: @project.url, back_path: root_path,
+  date_form_url: nil, from: nil, to: nil,
+  project: @project, active_tab: "Reports" %>
+
+<p class="text-[13px] font-medium text-[#1a1a2e] mb-4">Saved Reports</p>
+
+<% if @reports.any? %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee]">
+    <% @reports.each_with_index do |report, idx| %>
+      <div class="<%= 'border-t border-[#f0f0f5]' if idx > 0 %> px-4 py-3 flex items-center justify-between">
+        <div>
+          <%= link_to report.name, project_saved_report_path(@project, report), class: "text-[13px] font-medium text-[#5046e5] hover:underline" %>
+          <span class="text-[11px] text-[#8b8ba3] ml-2 bg-[#fafafb] px-2 py-0.5 rounded"><%= report.report_type %></span>
+          <span class="text-[11px] text-[#b4b4c8] ml-2">saved <%= time_ago_in_words(report.created_at) %> ago</span>
+        </div>
+        <%= link_to "Delete", project_saved_report_path(@project, report), data: { turbo_method: :delete, turbo_confirm: "Delete this report?" }, class: "text-[11px] text-[#ef4444] hover:underline" %>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee] p-10 text-center">
+    <p class="text-[13px] text-[#8b8ba3]">No saved reports. Save a funnel, retention, or event explorer analysis to access it later.</p>
+  </div>
+<% end %>

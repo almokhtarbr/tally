@@ -1,0 +1,362 @@
+<%= turbo_stream_from "project_#{@project.id}_events" %>
+
+<%
+  def category_badge(cat)
+    case cat
+    when "Server Error"
+      '<span class="inline-block px-2 py-0.5 text-[11px] font-medium rounded-full bg-[#fff7ed] text-[#f97316]">Server</span>'.html_safe
+    when "Promise Error"
+      '<span class="inline-block px-2 py-0.5 text-[11px] font-medium rounded-full bg-[#fef2f2] text-[#ef4444]">Promise</span>'.html_safe
+    else
+      '<span class="inline-block px-2 py-0.5 text-[11px] font-medium rounded-full bg-[#fef2f2] text-[#ef4444]">JS Error</span>'.html_safe
+    end
+  end
+
+  def app_frame?(line)
+    !line.match?(/node_modules|vendor|internal|gems|<anonymous>|\(native\)|webpack/)
+  end
+
+  def last_action_from_breadcrumbs(bc_json)
+    bc = begin; JSON.parse(bc_json); rescue; []; end
+    return nil if bc.empty?
+    last = bc.last
+    data = last["data"] || {}
+    case last["type"]
+    when "click"
+      text = data["text"].to_s.strip
+      text.present? ? "Clicked \"#{text.truncate(30)}\"" : "Clicked #{data['selector'].to_s.truncate(30)}"
+    when "navigation"
+      "Navigated to #{data['path']}"
+    when "network"
+      "#{data['method']} #{data['url'].to_s.truncate(40)}"
+    when "form"
+      "Submitted form #{data['action'].to_s.truncate(30)}"
+    else
+      "#{last['type']}: #{data.values.first.to_s.truncate(30)}"
+    end
+  end
+%>
+
+<!-- Header -->
+<div class="flex items-center justify-between mb-5">
+  <div class="flex items-center gap-2 min-w-0">
+    <%= link_to errors_project_path(@project, from: @from, to: @to), class: "text-[#c4c4d4] hover:text-[#8b8ba3] shrink-0" do %>
+      <svg style="width:16px;height:16px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    <% end %>
+    <div class="min-w-0">
+      <div class="flex items-center gap-2">
+        <% if @error_category %><%= category_badge(@error_category) %><% end %>
+        <% if @error_type_name.present? && @error_type_name != @error_category %>
+          <span class="text-[12px] text-[#8b8ba3] font-mono"><%= @error_type_name %></span>
+        <% end %>
+      </div>
+      <h1 class="text-[16px] font-semibold text-[#1a1a2e] mt-1 max-w-[600px]"><%= @message %></h1>
+      <% if @source_file.present? %>
+        <p class="text-[12px] text-[#8b8ba3] font-mono mt-0.5"><%= @source_file %><% if @source_line %>:<%= @source_line %><% end %></p>
+      <% elsif @exception_class.present? %>
+        <p class="text-[12px] text-[#8b8ba3] font-mono mt-0.5"><%= @exception_class %></p>
+      <% end %>
+    </div>
+  </div>
+  <div class="flex items-center gap-2">
+    <%= render "projects/date_picker",
+      form_url: error_detail_project_path(@project), from: @from, to: @to,
+      extra_hidden_fields: { message: @message } %>
+  </div>
+</div>
+
+<!-- KPI Row -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] mb-4 grid grid-cols-4 divide-x divide-[#f0f0f5]">
+  <div class="px-4 py-3">
+    <p class="text-[11px] text-[#8b8ba3] font-medium">Events</p>
+    <span class="text-[20px] font-semibold text-[#ef4444] leading-none mt-1 block tabular-nums"><%= number_with_delimiter(@total_occurrences) %></span>
+  </div>
+  <div class="px-4 py-3">
+    <p class="text-[11px] text-[#8b8ba3] font-medium">Users</p>
+    <span class="text-[20px] font-semibold text-[#1a1a2e] leading-none mt-1 block tabular-nums"><%= @affected_users_list.size %></span>
+  </div>
+  <div class="px-4 py-3">
+    <p class="text-[11px] text-[#8b8ba3] font-medium">First Seen</p>
+    <span class="text-[14px] font-semibold text-[#1a1a2e] leading-none mt-1 block"><%= @first_seen&.strftime("%b %d, %H:%M") || "—" %></span>
+  </div>
+  <div class="px-4 py-3">
+    <p class="text-[11px] text-[#8b8ba3] font-medium">Last Seen</p>
+    <span class="text-[14px] font-semibold text-[#1a1a2e] leading-none mt-1 block"><%= @last_seen&.strftime("%b %d, %H:%M") || "—" %></span>
+  </div>
+</div>
+
+<!-- 2-col: Main content + Sidebar tags -->
+<div class="grid grid-cols-[1fr_280px] gap-4 mb-4">
+
+  <!-- Left column -->
+  <div class="space-y-4">
+
+    <!-- Timeline Chart -->
+    <div class="bg-white rounded-xl border border-[#e8e8ee] p-5">
+      <p class="text-[13px] font-medium text-[#1a1a2e] mb-3">Frequency</p>
+      <% if @chart_dates.any? %>
+        <div data-controller="chart"
+             data-chart-labels-value="<%= @chart_dates.map { |d| Date.parse(d).strftime('%b %d') }.to_json %>"
+             data-chart-data-value="<%= @chart_dates.map { |d| (@daily_timeline[Date.parse(d)] || 0) }.to_json %>"
+             data-chart-color-value="#ef4444"
+             style="height:140px">
+          <canvas data-chart-target="canvas"></canvas>
+        </div>
+      <% end %>
+    </div>
+
+    <% if @latest_event %>
+      <!-- Breadcrumbs / User Journey (the most useful section) -->
+      <% raw_bc = @latest_event.properties["breadcrumbs"] %>
+      <% if raw_bc.present? %>
+        <% bc = begin; JSON.parse(raw_bc); rescue; []; end %>
+        <% if bc.any? %>
+          <div class="bg-white rounded-xl border border-[#e8e8ee]">
+            <div class="px-4 py-2.5 border-b border-[#f0f0f5]">
+              <p class="text-[13px] font-medium text-[#1a1a2e]">What the user did before this error</p>
+              <p class="text-[11px] text-[#8b8ba3]">Last <%= bc.size %> actions from the most recent occurrence</p>
+            </div>
+            <div class="divide-y divide-[#f8f8fb]">
+              <% bc.each_with_index do |crumb, idx| %>
+                <% data = crumb["data"] || {} %>
+                <% is_last = idx == bc.size - 1 %>
+                <div class="flex items-start gap-3 px-4 py-2.5 <%= is_last ? 'bg-[#fef2f2]/30' : '' %>">
+                  <%
+                    icon_bg = case crumb["type"]
+                    when "click" then "bg-[#5046e5]"
+                    when "navigation" then "bg-[#22c55e]"
+                    when "network" then "bg-[#f59e0b]"
+                    when "form" then "bg-[#8b5cf6]"
+                    else "bg-[#8b8ba3]"
+                    end
+                  %>
+                  <span class="w-1.5 h-1.5 rounded-full mt-[7px] flex-shrink-0 <%= icon_bg %>"></span>
+                  <div class="flex-1 min-w-0">
+                    <% case crumb["type"] %>
+                    <% when "click" %>
+                      <% text = data["text"].to_s.strip %>
+                      <% if text.present? %>
+                        <p class="text-[13px] text-[#2d2d42]">Clicked <span class="font-medium">"<%= text.truncate(60) %>"</span></p>
+                      <% else %>
+                        <p class="text-[13px] text-[#2d2d42]">Clicked <span class="font-mono text-[12px] text-[#8b8ba3]"><%= data["selector"].to_s.truncate(50) %></span></p>
+                      <% end %>
+                    <% when "navigation" %>
+                      <p class="text-[13px] text-[#2d2d42]">Navigated to <span class="font-mono font-medium"><%= data["path"] %></span></p>
+                    <% when "network" %>
+                      <p class="text-[13px] text-[#2d2d42]"><span class="font-mono"><%= data["method"] %></span> <span class="font-mono text-[#8b8ba3]"><%= data["url"].to_s.truncate(60) %></span></p>
+                    <% when "form" %>
+                      <p class="text-[13px] text-[#2d2d42]">Submitted form <span class="font-mono text-[#8b8ba3]"><%= data["action"].to_s.truncate(40) %></span></p>
+                    <% else %>
+                      <p class="text-[13px] text-[#2d2d42]"><%= crumb["type"] %>: <%= data.values.first.to_s.truncate(60) %></p>
+                    <% end %>
+                  </div>
+                  <% time = crumb["time"] %>
+                  <% if time.present? %>
+                    <span class="text-[11px] text-[#b0b0c0] tabular-nums flex-shrink-0 mt-0.5"><%= Time.parse(time).strftime("%H:%M:%S") rescue time %></span>
+                  <% end %>
+                </div>
+              <% end %>
+              <!-- Error happened here -->
+              <div class="flex items-start gap-3 px-4 py-2.5 bg-[#fef2f2]/50">
+                <span class="w-1.5 h-1.5 rounded-full mt-[7px] flex-shrink-0 bg-[#ef4444]"></span>
+                <p class="text-[13px] font-medium text-[#ef4444]"><%= @message.truncate(80) %></p>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+
+      <!-- Stack Trace -->
+      <% stack = @latest_event.properties["stack"] %>
+      <% if stack.present? %>
+        <div class="bg-white rounded-xl border border-[#e8e8ee]">
+          <div class="px-4 py-2.5 border-b border-[#f0f0f5]">
+            <p class="text-[13px] font-medium text-[#1a1a2e]">Stack Trace</p>
+          </div>
+          <div class="p-4">
+            <div class="text-[12px] font-mono bg-[#1a1a2e] rounded-lg p-4 overflow-x-auto leading-relaxed">
+              <% stack.split("\n").each do |line| %>
+                <% is_app = app_frame?(line) %>
+                <div class="<%= is_app ? 'text-[#e8e8ee]' : 'text-[#555570]' %> whitespace-pre-wrap break-all"><%= line %></div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+
+    <!-- Occurrences Table -->
+    <div class="bg-white rounded-xl border border-[#e8e8ee]">
+      <div class="px-4 py-2.5 border-b border-[#f0f0f5]">
+        <p class="text-[13px] font-medium text-[#1a1a2e]">All Events <span class="text-[#8b8ba3] font-normal">(<%= @total_occurrences %>)</span></p>
+      </div>
+      <% if @occurrences.any? %>
+        <div class="divide-y divide-[#f8f8fb]">
+          <% @occurrences.each do |event| %>
+            <% uid = event.user_profile&.external_id || event.properties["anonymous_id"] || "—" %>
+            <% page = event.properties["path"] || event.properties["request_path"] || "" %>
+            <% browser = event.properties["browser"] %>
+            <% os_name = event.properties["os"] %>
+            <% bc_json = event.properties["breadcrumbs"] %>
+            <% last_action = bc_json.present? ? last_action_from_breadcrumbs(bc_json) : nil %>
+            <div class="px-4 py-2.5">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3 min-w-0">
+                  <span class="text-[13px] font-medium text-[#2d2d42]"><%= uid.to_s.truncate(25) %></span>
+                  <span class="text-[12px] text-[#8b8ba3] font-mono"><%= page.truncate(35) %></span>
+                  <% if browser.present? %>
+                    <span class="text-[11px] text-[#b0b0c0]"><%= browser %><%= os_name.present? ? " / #{os_name}" : "" %></span>
+                  <% end %>
+                </div>
+                <span class="text-[11px] text-[#b0b0c0] tabular-nums flex-shrink-0"><%= event.occurred_at.strftime("%b %d %H:%M:%S") %></span>
+              </div>
+              <% if last_action.present? %>
+                <p class="text-[11px] text-[#8b8ba3] mt-0.5">Last action: <%= last_action %></p>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-[13px] text-[#8b8ba3] p-6 text-center">No occurrences.</p>
+      <% end %>
+    </div>
+
+  </div>
+
+  <!-- Right sidebar: Tags -->
+  <div class="space-y-4">
+
+    <% if @error_category == "Server Error" && (@server_controller.present? || @request_path.present?) %>
+      <!-- Server Context -->
+      <div class="bg-white rounded-xl border border-[#e8e8ee]">
+        <div class="px-3 py-2 border-b border-[#f0f0f5]">
+          <p class="text-[12px] font-medium text-[#1a1a2e]">Server Context</p>
+        </div>
+        <div class="px-3 py-2 space-y-2">
+          <% if @server_controller.present? %>
+            <div>
+              <p class="text-[10px] text-[#8b8ba3] uppercase tracking-wide">Controller</p>
+              <p class="text-[12px] text-[#1a1a2e] font-mono"><%= @server_controller %>#<%= @server_action %></p>
+            </div>
+          <% end %>
+          <% if @request_path.present? %>
+            <div>
+              <p class="text-[10px] text-[#8b8ba3] uppercase tracking-wide">Request</p>
+              <p class="text-[12px] text-[#1a1a2e] font-mono"><%= @http_method %> <%= @request_path %></p>
+            </div>
+          <% end %>
+          <% if @exception_class.present? %>
+            <div>
+              <p class="text-[10px] text-[#8b8ba3] uppercase tracking-wide">Exception</p>
+              <p class="text-[12px] text-[#1a1a2e] font-mono"><%= @exception_class %></p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Business Impact for this error -->
+    <% if @impact && @impact[:error_users] > 0 %>
+      <div class="bg-white rounded-xl border border-[#fecaca]">
+        <div class="px-3 py-2 border-b border-[#fecaca] bg-[#fef2f2] rounded-t-xl">
+          <p class="text-[12px] font-semibold text-[#991b1b]">Business Impact</p>
+        </div>
+        <div class="px-3 py-2 space-y-2">
+          <div>
+            <p class="text-[10px] text-[#8b8ba3] uppercase tracking-wide">Error User Conv.</p>
+            <p class="text-[14px] font-semibold text-[#ef4444] tabular-nums"><%= @impact[:error_conversion_rate] %>%</p>
+          </div>
+          <div>
+            <p class="text-[10px] text-[#8b8ba3] uppercase tracking-wide">Clean User Conv.</p>
+            <p class="text-[14px] font-semibold text-[#22c55e] tabular-nums"><%= @impact[:clean_conversion_rate] %>%</p>
+          </div>
+          <div>
+            <p class="text-[10px] text-[#8b8ba3] uppercase tracking-wide">Est. Lost Conversions</p>
+            <p class="text-[14px] font-semibold text-[#f97316] tabular-nums"><%= @impact[:lost_conversions] %></p>
+          </div>
+          <% if @impact[:lost_revenue] %>
+            <div>
+              <p class="text-[10px] text-[#8b8ba3] uppercase tracking-wide">Est. Lost Revenue</p>
+              <p class="text-[14px] font-semibold text-[#ef4444] tabular-nums">$<%= number_with_delimiter(@impact[:lost_revenue]) %></p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Pages affected -->
+    <% if @error_pages.any? %>
+      <div class="bg-white rounded-xl border border-[#e8e8ee]">
+        <div class="px-3 py-2 border-b border-[#f0f0f5]">
+          <p class="text-[12px] font-medium text-[#1a1a2e]">Pages Affected</p>
+        </div>
+        <div class="divide-y divide-[#f8f8fb]">
+          <% @error_pages.each do |page, count| %>
+            <div class="flex items-center justify-between px-3 py-1.5">
+              <span class="text-[12px] text-[#2d2d42] font-mono truncate pr-2"><%= page.truncate(25) %></span>
+              <span class="text-[11px] text-[#8b8ba3] tabular-nums"><%= count %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Browsers -->
+    <% if @browser_breakdown.any? %>
+      <div class="bg-white rounded-xl border border-[#e8e8ee]">
+        <div class="px-3 py-2 border-b border-[#f0f0f5]">
+          <p class="text-[12px] font-medium text-[#1a1a2e]">Browsers</p>
+        </div>
+        <div class="divide-y divide-[#f8f8fb]">
+          <% @browser_breakdown.each do |browser, count| %>
+            <div class="flex items-center justify-between px-3 py-1.5">
+              <span class="text-[12px] text-[#2d2d42]"><%= browser %></span>
+              <span class="text-[11px] text-[#8b8ba3] tabular-nums"><%= count %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- OS -->
+    <% if @os_breakdown.any? %>
+      <div class="bg-white rounded-xl border border-[#e8e8ee]">
+        <div class="px-3 py-2 border-b border-[#f0f0f5]">
+          <p class="text-[12px] font-medium text-[#1a1a2e]">Operating System</p>
+        </div>
+        <div class="divide-y divide-[#f8f8fb]">
+          <% @os_breakdown.each do |os, count| %>
+            <div class="flex items-center justify-between px-3 py-1.5">
+              <span class="text-[12px] text-[#2d2d42]"><%= os %></span>
+              <span class="text-[11px] text-[#8b8ba3] tabular-nums"><%= count %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Users -->
+    <% if @affected_users_list.any? %>
+      <div class="bg-white rounded-xl border border-[#e8e8ee]">
+        <div class="px-3 py-2 border-b border-[#f0f0f5]">
+          <p class="text-[12px] font-medium text-[#1a1a2e]">Affected Users</p>
+        </div>
+        <div class="divide-y divide-[#f8f8fb]">
+          <% @affected_users_list.first(10).each do |uid| %>
+            <div class="px-3 py-1.5">
+              <span class="text-[12px] text-[#2d2d42] font-mono"><%= uid.to_s.truncate(30) %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @message.start_with?("Script error") && @source_file.blank? && @source_line.blank? %>
+      <div class="bg-[#fffbeb] rounded-xl border border-[#fef3c7] p-3">
+        <p class="text-[11px] font-medium text-[#92400e] mb-1">Cross-origin error</p>
+        <p class="text-[11px] text-[#a16207] leading-relaxed">Browser hides error details for cross-origin scripts. Add <code class="bg-white/50 px-1 rounded">crossorigin="anonymous"</code> to script tags to get full stack traces.</p>
+      </div>
+    <% end %>
+
+  </div>
+</div>

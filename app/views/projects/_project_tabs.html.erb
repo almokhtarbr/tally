@@ -1,0 +1,28 @@
+<div class="flex items-center gap-0 mb-4 border-b border-[#e8e8ee] overflow-x-auto">
+  <%
+    tabs = [
+      { label: "Analytics", path: project_path(project, from: from, to: to) },
+      { label: "Events", path: event_explorer_project_path(project, from: from, to: to) },
+      { label: "Users", path: users_project_path(project, from: from, to: to) },
+      { label: "Funnels", path: funnels_project_path(project, from: from, to: to) },
+      { label: "Retention", path: retention_project_path(project, from: from, to: to) },
+      { label: "Paths", path: user_paths_project_path(project, from: from, to: to) },
+      { label: "Forms", path: forms_project_path(project, from: from, to: to) },
+      { label: "Errors", path: errors_project_path(project, from: from, to: to) },
+      { label: "Anomalies", path: anomalies_project_path(project, from: from, to: to) },
+      { label: "Segments", path: project_segments_path(project) },
+      { label: "Webhooks", path: project_webhooks_path(project) },
+      { label: "Reports", path: project_saved_reports_path(project) },
+    ]
+    current = local_assigns[:active_tab] || "Analytics"
+  %>
+  <% tabs.each do |tab| %>
+    <% active = tab[:label] == current %>
+    <%= link_to tab[:path], class: "relative px-4 py-2.5 text-[13px] font-medium whitespace-nowrap #{active ? 'text-[#5046e5]' : 'text-[#8b8ba3] hover:text-[#4a4a68]'}" do %>
+      <%= tab[:label] %>
+      <% if active %>
+        <span class="absolute bottom-0 left-4 right-4 h-[2px] bg-[#5046e5] rounded-t"></span>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

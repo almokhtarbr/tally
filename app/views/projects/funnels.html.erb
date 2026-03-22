@@ -1,0 +1,227 @@
+<%= render "projects/page_header",
+  title: @project.name, subtitle: @project.url, back_path: root_path,
+  date_form_url: funnels_project_path(@project), from: @from, to: @to,
+  extra_hidden_fields: { steps: @steps, window: @window }.compact,
+  project: @project, active_tab: "Funnels" %>
+
+<!-- Overall Conversion KPI -->
+<% if @funnel_results.present? && @funnel_results.size >= 2 %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee] mb-4 grid grid-cols-3 divide-x divide-[#f0f0f5]">
+    <div class="px-4 py-3">
+      <p class="text-[11px] text-[#8b8ba3] font-medium">Overall Conversion</p>
+      <span class="text-[24px] font-semibold leading-none mt-1 block tabular-nums <%= @overall_conversion >= 50 ? 'text-[#22c55e]' : @overall_conversion >= 20 ? 'text-[#f59e0b]' : 'text-[#ef4444]' %>"><%= @overall_conversion %>%</span>
+    </div>
+    <div class="px-4 py-3">
+      <p class="text-[11px] text-[#8b8ba3] font-medium">Entered</p>
+      <span class="text-[20px] font-semibold text-[#1a1a2e] leading-none mt-1 block tabular-nums"><%= number_with_delimiter(@entered) %></span>
+    </div>
+    <div class="px-4 py-3">
+      <p class="text-[11px] text-[#8b8ba3] font-medium">Completed</p>
+      <span class="text-[20px] font-semibold text-[#1a1a2e] leading-none mt-1 block tabular-nums"><%= number_with_delimiter(@completed) %></span>
+    </div>
+  </div>
+<% end %>
+
+<!-- Funnel Configuration -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] p-4 mb-4">
+  <%= form_with url: funnels_project_path(@project), method: :get, class: "space-y-3" do %>
+    <input type="hidden" name="from" value="<%= @from %>">
+    <input type="hidden" name="to" value="<%= @to %>">
+    <p class="text-[13px] font-medium text-[#1a1a2e] mb-2">Define Funnel Steps</p>
+    <div class="flex items-center gap-3 flex-wrap">
+      <% 5.times do |i| %>
+        <div class="flex items-center gap-1.5">
+          <span class="w-5 h-5 rounded-full bg-[#5046e5] flex items-center justify-center flex-shrink-0">
+            <span class="text-[10px] font-semibold text-white"><%= i + 1 %></span>
+          </span>
+          <select name="steps[]" class="text-[12px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-2 py-[5px] min-w-[160px]">
+            <option value="">— select —</option>
+            <% @available_events.each do |name| %>
+              <option value="<%= name %>" <%= "selected" if @steps[i] == name %>><%= name %></option>
+            <% end %>
+          </select>
+        </div>
+        <% if i < 4 %>
+          <svg style="width:12px;height:12px;flex-shrink:0" class="text-[#c4c4d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        <% end %>
+      <% end %>
+    </div>
+
+    <!-- Filters Row -->
+    <div class="flex items-center gap-3 pt-1 flex-wrap">
+      <div class="flex items-center gap-1.5">
+        <label class="text-[11px] text-[#8b8ba3] font-medium">Conversion Window</label>
+        <select name="window" class="text-[12px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-2 py-[5px]">
+          <% [["Unlimited", "unlimited"], ["1 hour", "1h"], ["1 day", "1d"], ["7 days", "7d"], ["30 days", "30d"]].each do |label, val| %>
+            <option value="<%= val %>" <%= "selected" if @window == val %>><%= label %></option>
+          <% end %>
+        </select>
+      </div>
+
+      <!-- Property Filter -->
+      <div class="flex items-center gap-1.5">
+        <label class="text-[11px] text-[#8b8ba3] font-medium">Filter by</label>
+        <select name="filter_prop_type" class="text-[12px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-2 py-[5px]">
+          <option value="event" <%= "selected" if @filter_prop_type == "event" %>>Event property</option>
+          <option value="user" <%= "selected" if @filter_prop_type == "user" %>>User property</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <input type="text" name="filter_prop_key" value="<%= @filter_prop_key %>" placeholder="property key" class="text-[12px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-2 py-[5px] w-[120px]" list="funnel_prop_keys">
+        <datalist id="funnel_prop_keys">
+          <% (@filter_prop_type == "user" ? @available_user_properties : @available_event_properties).each do |prop| %>
+            <option value="<%= prop %>">
+          <% end %>
+        </datalist>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <input type="text" name="filter_prop_value" value="<%= @filter_prop_value %>" placeholder="contains..." class="text-[12px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-2 py-[5px] w-[120px]">
+      </div>
+
+      <!-- Segment Filter -->
+      <% if @segments.any? %>
+        <div class="flex items-center gap-1.5">
+          <label class="text-[11px] text-[#8b8ba3] font-medium">Segment</label>
+          <select name="segment_id" class="text-[12px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-2 py-[5px]">
+            <option value="">All users</option>
+            <% @segments.each do |seg| %>
+              <option value="<%= seg.id %>" <%= "selected" if @segment_id.to_s == seg.id.to_s %>><%= seg.name %></option>
+            <% end %>
+          </select>
+        </div>
+      <% end %>
+
+      <button type="submit" class="bg-[#5046e5] text-white text-[12px] font-medium px-4 py-[6px] rounded-md hover:bg-[#4338ca]">Analyze Funnel</button>
+    </div>
+  <% end %>
+</div>
+
+<!-- Active Filters -->
+<% if @filter_prop_key.present? || @segment_id.present? %>
+  <div class="flex items-center gap-2 mb-4">
+    <% if @filter_prop_key.present? %>
+      <span class="inline-flex items-center gap-1 text-[11px] bg-[#ede9fe] text-[#5046e5] px-2.5 py-1 rounded-full">
+        <%= @filter_prop_type == "user" ? "User" : "Event" %>: <%= @filter_prop_key %> contains "<%= @filter_prop_value %>"
+        <%= link_to "×", funnels_project_path(@project, from: @from, to: @to, steps: @steps, window: @window), class: "ml-1 font-bold" %>
+      </span>
+    <% end %>
+    <% if @segment_id.present? %>
+      <% seg = @segments.find { |s| s.id.to_s == @segment_id.to_s } %>
+      <span class="inline-flex items-center gap-1 text-[11px] bg-[#dbeafe] text-[#2563eb] px-2.5 py-1 rounded-full">
+        Segment: <%= seg&.name %>
+        <%= link_to "×", funnels_project_path(@project, from: @from, to: @to, steps: @steps, window: @window, filter_prop_key: @filter_prop_key, filter_prop_value: @filter_prop_value, filter_prop_type: @filter_prop_type), class: "ml-1 font-bold" %>
+      </span>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @funnel_results.present? %>
+  <!-- Save Report -->
+  <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center gap-2">
+      <% if @saved_funnels.any? %>
+        <span class="text-[11px] text-[#8b8ba3]">Saved:</span>
+        <% @saved_funnels.first(5).each do |report| %>
+          <%= link_to report.name, project_saved_report_path(@project, report), class: "text-[11px] text-[#5046e5] hover:underline" %>
+        <% end %>
+      <% end %>
+    </div>
+    <%= form_with url: project_saved_reports_path(@project), method: :post, class: "flex items-center gap-2" do %>
+      <input type="hidden" name="saved_report[report_type]" value="funnel">
+      <input type="hidden" name="saved_report[configuration][steps][]" value="">
+      <% @steps.each do |step| %>
+        <input type="hidden" name="saved_report[configuration][steps][]" value="<%= step %>">
+      <% end %>
+      <input type="hidden" name="saved_report[configuration][window]" value="<%= @window %>">
+      <% if @filter_prop_key.present? %>
+        <input type="hidden" name="saved_report[configuration][filter_prop_key]" value="<%= @filter_prop_key %>">
+        <input type="hidden" name="saved_report[configuration][filter_prop_value]" value="<%= @filter_prop_value %>">
+        <input type="hidden" name="saved_report[configuration][filter_prop_type]" value="<%= @filter_prop_type %>">
+      <% end %>
+      <input type="text" name="saved_report[name]" placeholder="Report name..." class="text-[12px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-2 py-[5px] w-[140px]">
+      <button type="submit" class="text-[11px] text-[#5046e5] hover:underline font-medium">Save</button>
+    <% end %>
+  </div>
+
+  <!-- Export CSV -->
+  <div class="flex justify-end mb-2">
+    <%= link_to "Export CSV",
+      export_csv_project_path(@project, type: "funnel", from: @from, to: @to, steps: @steps, window: @window,
+        filter_prop_key: @filter_prop_key, filter_prop_value: @filter_prop_value, filter_prop_type: @filter_prop_type, segment_id: @segment_id),
+      class: "text-[11px] text-[#8b8ba3] hover:text-[#5046e5]" %>
+  </div>
+
+  <!-- Funnel Visualization -->
+  <div class="bg-white rounded-xl border border-[#e8e8ee] p-5 mb-4">
+    <p class="text-[13px] font-medium text-[#1a1a2e] mb-4">Funnel Results</p>
+    <p class="text-[11px] text-[#8b8ba3] mb-4">Only identified users (with user ID) are counted.<%= " Conversion window: #{@window}." unless @window == "unlimited" %></p>
+
+    <div class="space-y-1">
+      <% @funnel_results.each_with_index do |step, idx| %>
+        <div class="flex items-center gap-3">
+          <span class="w-6 h-6 rounded-full bg-[#5046e5] flex items-center justify-center flex-shrink-0">
+            <span class="text-[10px] font-bold text-white"><%= idx + 1 %></span>
+          </span>
+          <div class="flex-1">
+            <div class="flex items-center gap-3 mb-1">
+              <span class="text-[13px] font-medium text-[#2d2d42]"><%= step[:name] %></span>
+              <span class="text-[13px] text-[#8b8ba3] font-mono tabular-nums"><%= number_with_delimiter(step[:count]) %> users</span>
+              <% if idx > 0 %>
+                <span class="text-[11px] font-medium <%= step[:step_pct] >= 50 ? 'text-[#22c55e]' : 'text-[#ef4444]' %>"><%= step[:step_pct] %>%</span>
+              <% end %>
+            </div>
+            <div class="h-10 rounded-lg bg-[#f0f0f5] overflow-hidden">
+              <div class="h-full rounded-lg flex items-center px-3 transition-all" style="width: <%= [step[:total_pct], 2].max %>%; background: linear-gradient(90deg, #5046e5, #7c6cff); opacity: <%= 0.4 + (step[:total_pct] / 100.0 * 0.6) %>">
+                <span class="text-[11px] font-semibold text-white whitespace-nowrap"><%= step[:total_pct] %>%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <% if idx < @funnel_results.size - 1 && step[:dropoff] > 0 %>
+          <div class="flex items-center gap-3 pl-9">
+            <span class="text-[11px] text-[#ef4444]">&#8595; <%= number_with_delimiter(@funnel_results[idx + 1][:dropoff]) %> dropped off</span>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Summary Table -->
+  <div class="bg-white rounded-xl border border-[#e8e8ee] mb-4">
+    <div class="px-4 py-2.5 border-b border-[#f0f0f5]">
+      <p class="text-[13px] font-medium text-[#1a1a2e]">Step Details</p>
+    </div>
+    <table class="w-full">
+      <thead>
+        <tr class="border-b border-[#f0f0f5] text-[11px] text-[#8b8ba3]">
+          <th class="text-left px-4 py-2 font-medium">Step</th>
+          <th class="text-right px-4 py-2 font-medium w-[80px]">Users</th>
+          <th class="text-right px-4 py-2 font-medium w-[110px]">Step Conv.</th>
+          <th class="text-right px-4 py-2 font-medium w-[110px]">Overall Conv.</th>
+          <th class="text-right px-4 py-2 font-medium w-[100px]">Median Time</th>
+          <th class="text-right px-4 py-2 font-medium w-[80px]">Drop-off</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @funnel_results.each do |step| %>
+          <tr class="border-t border-[#f8f8fb]">
+            <td class="px-4 py-[7px] text-[13px] text-[#2d2d42]"><%= step[:name] %></td>
+            <td class="px-4 py-[7px] text-right text-[13px] text-[#2d2d42] font-mono tabular-nums"><%= number_with_delimiter(step[:count]) %></td>
+            <td class="px-4 py-[7px] text-right text-[13px] text-[#8b8ba3] font-mono tabular-nums"><%= step[:step_pct] %>%</td>
+            <td class="px-4 py-[7px] text-right text-[13px] text-[#8b8ba3] font-mono tabular-nums"><%= step[:total_pct] %>%</td>
+            <td class="px-4 py-[7px] text-right text-[13px] text-[#8b8ba3] font-mono tabular-nums"><%= step[:median_time] ? format_duration(step[:median_time]) : "—" %></td>
+            <td class="px-4 py-[7px] text-right text-[13px] text-[#ef4444] font-mono tabular-nums"><%= number_with_delimiter(step[:dropoff]) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% elsif @steps.present? && @steps.size < 2 %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee] p-8 mb-4 text-center">
+    <p class="text-[13px] text-[#8b8ba3]">Select at least 2 events to build a funnel.</p>
+  </div>
+<% else %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee] p-8 mb-4 text-center">
+    <p class="text-[13px] text-[#8b8ba3]">Select events above and click "Analyze Funnel" to see conversion data.</p>
+  </div>
+<% end %>

@@ -1,0 +1,199 @@
+<%= turbo_stream_from "project_#{@project.id}_events" %>
+
+<%
+  def pct(curr, prev)
+    return nil if prev == 0 && curr == 0; return 100.0 if prev == 0
+    ((curr - prev).to_f / prev * 100).round(1)
+  end
+
+  def error_type_badge(event_name)
+    case event_name
+    when "$error"
+      '<span class="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-[#fef2f2] text-[#ef4444]">JS</span>'.html_safe
+    when "$promise_error"
+      '<span class="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-[#fef2f2] text-[#ef4444]">Promise</span>'.html_safe
+    when "$server_error"
+      '<span class="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-[#fff7ed] text-[#f97316]">Server</span>'.html_safe
+    when "$network_error"
+      '<span class="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-[#fefce8] text-[#eab308]">Network</span>'.html_safe
+    else
+      '<span class="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-[#f5f5f5] text-[#8b8ba3]">Unknown</span>'.html_safe
+    end
+  end
+%>
+
+<%= render "projects/page_header",
+  title: @project.name, subtitle: @project.url, back_path: root_path,
+  date_form_url: errors_project_path(@project), from: @from, to: @to,
+  project: @project, active_tab: "Errors" %>
+
+<!-- Filter Tabs -->
+<div class="flex items-center gap-1 mb-4">
+  <% [
+    ["all", "All"],
+    ["frontend", "Frontend"],
+    ["backend", "Backend"],
+    ["network", "Network"],
+  ].each do |key, label| %>
+    <% active = @error_type == key %>
+    <% count = @tab_counts[key] || 0 %>
+    <%= link_to errors_project_path(@project, from: @from, to: @to, error_type: key),
+      class: "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition #{active ? 'bg-[#1a1a2e] text-white' : 'bg-white border border-[#e8e8ee] text-[#4a4a68] hover:bg-[#fafafb]'}" do %>
+      <%= label %>
+      <span class="<%= active ? 'bg-white/20' : 'bg-[#f0f0f5]' %> rounded px-1.5 py-0.5 text-[10px] tabular-nums"><%= count %></span>
+    <% end %>
+  <% end %>
+</div>
+
+<!-- Business Impact Card -->
+<% if @impact && @impact[:error_users] > 0 %>
+  <div class="bg-gradient-to-r from-[#fef2f2] to-[#fff7ed] rounded-xl border border-[#fecaca] p-4 mb-4">
+    <div class="flex items-center justify-between mb-3">
+      <p class="text-[13px] font-semibold text-[#991b1b]">Business Impact</p>
+      <span class="text-[11px] text-[#8b8ba3]">Conversion event: <code class="bg-white/60 px-1.5 py-0.5 rounded"><%= @impact[:conversion_event] %></code></span>
+    </div>
+    <div class="grid grid-cols-4 gap-4">
+      <div>
+        <p class="text-[11px] text-[#8b8ba3] font-medium">Error Users Conv. Rate</p>
+        <span class="text-[18px] font-semibold text-[#ef4444] block mt-0.5 tabular-nums"><%= @impact[:error_conversion_rate] %>%</span>
+        <p class="text-[11px] text-[#8b8ba3]"><%= @impact[:error_converts] %> of <%= @impact[:error_users] %> users</p>
+      </div>
+      <div>
+        <p class="text-[11px] text-[#8b8ba3] font-medium">Clean Users Conv. Rate</p>
+        <span class="text-[18px] font-semibold text-[#22c55e] block mt-0.5 tabular-nums"><%= @impact[:clean_conversion_rate] %>%</span>
+        <p class="text-[11px] text-[#8b8ba3]"><%= @impact[:clean_converts] %> of <%= @impact[:clean_users] %> users</p>
+      </div>
+      <div>
+        <p class="text-[11px] text-[#8b8ba3] font-medium">Est. Lost Conversions</p>
+        <span class="text-[18px] font-semibold text-[#f97316] block mt-0.5 tabular-nums"><%= @impact[:lost_conversions] %></span>
+        <p class="text-[11px] text-[#8b8ba3]">due to errors</p>
+      </div>
+      <div>
+        <p class="text-[11px] text-[#8b8ba3] font-medium">Est. Lost Revenue</p>
+        <% if @impact[:lost_revenue] %>
+          <span class="text-[18px] font-semibold text-[#ef4444] block mt-0.5 tabular-nums">$<%= number_with_delimiter(@impact[:lost_revenue]) %></span>
+          <p class="text-[11px] text-[#8b8ba3]">at $<%= @project.avg_conversion_value %>/conversion</p>
+        <% else %>
+          <span class="text-[14px] text-[#8b8ba3] block mt-1">Set avg_conversion_value in project settings</span>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<!-- KPI Row -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] mb-4 grid grid-cols-4 divide-x divide-[#f0f0f5]">
+  <%
+    error_kpis = [
+      { label: "Total Errors", val: @total_errors, prev: @prev_total_errors, color: @total_errors > 0 ? "#ef4444" : nil },
+      { label: "JS Errors", val: @js_errors, prev: @prev_js_errors, color: @js_errors > 0 ? "#ef4444" : nil },
+      { label: "Server Errors", val: @server_errors, prev: @prev_server_errors, color: @server_errors > 0 ? "#f97316" : nil },
+      { label: "Network Errors", val: @network_errors, prev: @prev_network_errors, color: @network_errors > 0 ? "#eab308" : nil },
+    ]
+  %>
+  <% error_kpis.each do |k| %>
+    <div class="px-4 py-3">
+      <p class="text-[11px] text-[#8b8ba3] font-medium"><%= k[:label] %></p>
+      <div class="flex items-baseline gap-2 mt-1">
+        <span class="text-[20px] font-semibold leading-none tabular-nums" style="color:<%= k[:color] || '#1a1a2e' %>"><%= number_with_delimiter(k[:val]) %></span>
+        <% if k[:prev] %>
+          <% c = pct(k[:val], k[:prev]) %>
+          <% unless c.nil? %>
+            <span class="text-[11px] font-medium leading-none <%= c >= 0 ? 'text-[#ef4444]' : 'text-[#22c55e]' %>"><%= c >= 0 ? "+#{c}" : c %>%</span>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<!-- Error Rate Chart -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] p-5 mb-4">
+  <div class="flex items-center justify-between mb-4">
+    <p class="text-[13px] font-medium text-[#1a1a2e]">Error Rate</p>
+    <span class="flex items-center gap-1.5 text-[11px] text-[#8b8ba3]"><span style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block"></span>Errors</span>
+  </div>
+  <% if @chart_dates.any? %>
+    <div data-controller="chart"
+         data-chart-labels-value="<%= @chart_dates.map { |d| Date.parse(d).strftime('%b %d') }.to_json %>"
+         data-chart-data-value="<%= @chart_dates.map { |d| (@daily_errors[Date.parse(d)] || 0) }.to_json %>"
+         data-chart-color-value="#ef4444"
+         style="height:200px">
+      <canvas data-chart-target="canvas"></canvas>
+    </div>
+  <% else %>
+    <p class="text-[13px] text-[#8b8ba3] py-10 text-center">No data.</p>
+  <% end %>
+</div>
+
+<!-- Error Groups — Sentry-style issue list -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] mb-4">
+  <div class="px-4 py-2.5 border-b border-[#f0f0f5]">
+    <p class="text-[13px] font-medium text-[#1a1a2e]">Issues</p>
+  </div>
+  <% if @error_groups.any? %>
+    <div class="divide-y divide-[#f8f8fb]">
+      <% @error_groups.each do |eg| %>
+        <%= link_to error_detail_project_path(@project, message: eg.message, from: @from, to: @to), class: "flex items-start gap-3 px-4 py-3 hover:bg-[#fafafb] transition-colors block" do %>
+          <div class="mt-0.5"><%= error_type_badge(eg.event_name) %></div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-baseline gap-2">
+              <% if eg.error_type.present? %>
+                <span class="text-[12px] font-medium text-[#4a4a68]"><%= eg.error_type %></span>
+              <% end %>
+              <span class="text-[13px] text-[#1a1a2e] truncate"><%= eg.message.truncate(90) %></span>
+            </div>
+            <% if eg.try(:top_page).present? %>
+              <p class="text-[11px] text-[#8b8ba3] font-mono mt-0.5"><%= eg.top_page %></p>
+            <% end %>
+          </div>
+          <div class="flex items-center gap-4 flex-shrink-0 text-right">
+            <div>
+              <p class="text-[13px] font-mono tabular-nums text-[#2d2d42]"><%= number_with_delimiter(eg.occurrences) %></p>
+              <p class="text-[10px] text-[#8b8ba3]">events</p>
+            </div>
+            <div>
+              <p class="text-[13px] font-mono tabular-nums text-[#8b8ba3]"><%= eg.affected_users %></p>
+              <p class="text-[10px] text-[#8b8ba3]">users</p>
+            </div>
+            <div class="w-[80px]">
+              <p class="text-[11px] text-[#8b8ba3]"><%= eg.last_seen&.strftime("%b %d %H:%M") %></p>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-[13px] text-[#8b8ba3] py-10 text-center">No errors in this period.</p>
+  <% end %>
+</div>
+
+<!-- 3-col: Errors by Page + Errors by User + Browser Breakdown -->
+<div class="grid grid-cols-3 gap-4 mb-4">
+  <% [
+    ["Errors by Page", @errors_by_page, "Count", "#ef4444"],
+    ["Errors by User", @errors_by_user, "Errors", "#ef4444"],
+    ["Browser Breakdown", @browser_breakdown, "Count", "#5046e5"],
+  ].each do |title, data, col_label, bar_color| %>
+    <div class="bg-white rounded-xl border border-[#e8e8ee]">
+      <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#f0f0f5]">
+        <p class="text-[13px] font-medium text-[#1a1a2e]"><%= title %></p>
+        <p class="text-[11px] text-[#8b8ba3]"><%= col_label %></p>
+      </div>
+      <% if data.any? %>
+        <% mx = data.first.last.to_f %>
+        <% data.each do |(name, count)| %>
+          <div class="relative px-4 py-[7px] border-t border-[#f8f8fb]">
+            <div class="absolute inset-y-0 left-0 opacity-[0.07] rounded-r" style="width:<%= (count / mx * 100).round %>%; background:<%= bar_color %>"></div>
+            <div class="relative flex items-center justify-between">
+              <span class="text-[13px] text-[#2d2d42] truncate pr-3"><%= name.to_s.truncate(40) %></span>
+              <span class="text-[13px] text-[#8b8ba3] font-mono tabular-nums"><%= number_with_delimiter(count) %></span>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="text-[13px] text-[#8b8ba3] p-4 text-center">No data.</p>
+      <% end %>
+    </div>
+  <% end %>
+</div>

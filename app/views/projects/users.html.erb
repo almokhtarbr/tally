@@ -1,0 +1,106 @@
+<%= render "projects/page_header",
+  title: @project.name, subtitle: @project.url, back_path: root_path,
+  date_form_url: users_project_path(@project), from: @from, to: @to,
+  extra_hidden_fields: @query.present? ? { q: @query } : {},
+  project: @project, active_tab: "Users" %>
+
+<!-- KPI Row -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] mb-4 grid grid-cols-3 divide-x divide-[#f0f0f5]">
+  <% [
+    ["Total Users", @total_users],
+    ["New Users (in range)", @new_users_in_range],
+    ["Active Users (in range)", @active_users_in_range],
+  ].each do |label, val| %>
+    <div class="px-4 py-3">
+      <p class="text-[11px] text-[#8b8ba3] font-medium"><%= label %></p>
+      <span class="text-[20px] font-semibold text-[#1a1a2e] leading-none mt-1 block tabular-nums"><%= number_with_delimiter(val) %></span>
+    </div>
+  <% end %>
+</div>
+
+<!-- Search Bar -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] p-4 mb-4">
+  <%= form_with url: users_project_path(@project), method: :get, class: "flex items-center gap-3" do %>
+    <input type="hidden" name="from" value="<%= @from %>">
+    <input type="hidden" name="to" value="<%= @to %>">
+    <div class="flex-1 relative">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#c4c4d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <input type="text" name="q" value="<%= @query %>" placeholder="Search by user ID or property..."
+        class="w-full text-[13px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md pl-9 pr-3 py-[7px] focus:outline-none focus:ring-1 focus:ring-[#5046e5] focus:border-[#5046e5]">
+    </div>
+    <button type="submit" class="bg-[#5046e5] text-white text-[12px] font-medium px-4 py-[7px] rounded-md hover:bg-[#4338ca]">Search</button>
+    <% if @query.present? %>
+      <%= link_to "Clear", users_project_path(@project, from: @from, to: @to), class: "text-[12px] text-[#8b8ba3] hover:text-[#5046e5]" %>
+    <% end %>
+  <% end %>
+</div>
+
+<!-- CSV Export -->
+<div class="flex justify-end mb-2">
+  <%= link_to "Export CSV",
+    export_csv_project_path(@project, type: "users", from: @from, to: @to),
+    class: "text-[11px] text-[#8b8ba3] hover:text-[#5046e5]" %>
+</div>
+
+<!-- Users Table -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] mb-4">
+  <div class="px-4 py-2.5 border-b border-[#f0f0f5] flex items-center justify-between">
+    <p class="text-[13px] font-medium text-[#1a1a2e]">Users</p>
+    <span class="text-[11px] text-[#8b8ba3]">Showing <%= number_with_delimiter(@users.size) %> of <%= number_with_delimiter(@total_users) %></span>
+  </div>
+  <% if @users.any? %>
+    <table class="w-full">
+      <thead>
+        <tr class="border-b border-[#f0f0f5] text-[11px] text-[#8b8ba3]">
+          <th class="text-left px-4 py-2 font-medium">User</th>
+          <th class="text-left px-4 py-2 font-medium">Properties</th>
+          <th class="text-right px-4 py-2 font-medium w-[110px]">First Seen</th>
+          <th class="text-right px-4 py-2 font-medium w-[110px]">Last Seen</th>
+          <th class="text-right px-4 py-2 font-medium w-[80px]">Events</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @users.each do |user| %>
+          <tr class="border-t border-[#f8f8fb] hover:bg-[#fafafb]">
+            <td class="px-4 py-2">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-full bg-[#5046e5]/10 flex items-center justify-center flex-shrink-0">
+                  <span class="text-[11px] font-semibold text-[#5046e5]"><%= user.external_id[0].upcase %></span>
+                </div>
+                <%= link_to user.external_id, user_profile_project_path(@project, user_profile_id: user.id, from: @from, to: @to), class: "text-[13px] text-[#5046e5] hover:underline truncate max-w-[200px]" %>
+              </div>
+            </td>
+            <td class="px-4 py-2 text-[12px] text-[#8b8ba3] max-w-[250px]">
+              <% if user.properties.any? %>
+                <span class="truncate block"><%= user.properties.first(3).map { |k,v| "#{k}: #{v.to_s.truncate(20)}" }.join(", ") %></span>
+              <% else %>
+                <span class="text-[#c4c4d4]">&mdash;</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-2 text-right text-[12px] text-[#8b8ba3] whitespace-nowrap"><%= user.first_seen_at&.strftime("%b %d, %Y") || "—" %></td>
+            <td class="px-4 py-2 text-right text-[12px] text-[#8b8ba3] whitespace-nowrap"><%= user.last_seen_at&.strftime("%b %d, %Y") || "—" %></td>
+            <td class="px-4 py-2 text-right text-[13px] text-[#2d2d42] font-mono tabular-nums"><%= number_with_delimiter(user.events_count) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="flex items-center justify-between px-4 py-3 border-t border-[#f0f0f5]">
+      <span class="text-[12px] text-[#8b8ba3]">Page <%= @page %> of <%= @total_pages %></span>
+      <div class="flex gap-2">
+        <% if @page > 1 %>
+          <%= link_to "← Prev", users_project_path(@project, from: @from, to: @to, page: @page - 1, q: @query), class: "text-[12px] text-[#5046e5] hover:underline" %>
+        <% end %>
+        <% if @page < @total_pages %>
+          <%= link_to "Next →", users_project_path(@project, from: @from, to: @to, page: @page + 1, q: @query), class: "text-[12px] text-[#5046e5] hover:underline" %>
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <div class="p-10 text-center">
+      <svg class="w-10 h-10 mx-auto text-[#e8e8ee] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      <p class="text-[13px] text-[#8b8ba3]"><%= @query.present? ? "No users matching \"#{@query}\"." : "No users found." %></p>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,180 @@
+<%= render "projects/page_header",
+  title: @project.name, subtitle: @project.url, back_path: root_path,
+  date_form_url: retention_project_path(@project), from: @from, to: @to,
+  extra_hidden_fields: { granularity: @granularity },
+  project: @project, active_tab: "Retention" %>
+
+<!-- Controls Row -->
+<div class="flex items-center gap-3 mb-4 flex-wrap">
+  <!-- Granularity Toggle -->
+  <div class="flex items-center bg-white rounded-lg border border-[#e8e8ee] overflow-hidden">
+    <%= link_to "Weekly", retention_project_path(@project, from: @from, to: @to, granularity: "weekly", filter_prop_key: @filter_prop_key, filter_prop_value: @filter_prop_value, segment_id: @segment_id),
+        class: "px-3 py-[5px] text-[11px] font-medium #{@granularity != 'daily' ? 'bg-[#5046e5] text-white' : 'text-[#8b8ba3] hover:text-[#4a4a68]'}" %>
+    <%= link_to "Daily", retention_project_path(@project, from: @from, to: @to, granularity: "daily", filter_prop_key: @filter_prop_key, filter_prop_value: @filter_prop_value, segment_id: @segment_id),
+        class: "px-3 py-[5px] text-[11px] font-medium #{@granularity == 'daily' ? 'bg-[#5046e5] text-white' : 'text-[#8b8ba3] hover:text-[#4a4a68]'}" %>
+  </div>
+
+  <!-- Property Filter -->
+  <%= form_with url: retention_project_path(@project), method: :get, class: "flex items-center gap-2" do %>
+    <input type="hidden" name="from" value="<%= @from %>">
+    <input type="hidden" name="to" value="<%= @to %>">
+    <input type="hidden" name="granularity" value="<%= @granularity %>">
+    <label class="text-[11px] text-[#8b8ba3] font-medium">Filter users by</label>
+    <input type="text" name="filter_prop_key" value="<%= @filter_prop_key %>" placeholder="property key" class="text-[12px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-2 py-[5px] w-[110px]" list="retention_prop_keys">
+    <datalist id="retention_prop_keys">
+      <% @available_user_properties.each do |prop| %>
+        <option value="<%= prop %>">
+      <% end %>
+    </datalist>
+    <input type="text" name="filter_prop_value" value="<%= @filter_prop_value %>" placeholder="contains..." class="text-[12px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-2 py-[5px] w-[110px]">
+
+    <% if @segments.any? %>
+      <select name="segment_id" class="text-[12px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-2 py-[5px]">
+        <option value="">All users</option>
+        <% @segments.each do |seg| %>
+          <option value="<%= seg.id %>" <%= "selected" if @segment_id.to_s == seg.id.to_s %>><%= seg.name %></option>
+        <% end %>
+      </select>
+    <% end %>
+
+    <button type="submit" class="bg-[#5046e5] text-white text-[11px] font-medium px-3 py-[5px] rounded-md hover:bg-[#4338ca]">Apply</button>
+    <% if @filter_prop_key.present? || @segment_id.present? %>
+      <%= link_to "Clear", retention_project_path(@project, from: @from, to: @to, granularity: @granularity), class: "text-[11px] text-[#8b8ba3] hover:text-[#5046e5]" %>
+    <% end %>
+  <% end %>
+
+  <span class="text-[11px] text-[#8b8ba3]">Cohorts based on first_seen_at. Only identified users with events are tracked.</span>
+</div>
+
+<!-- Active Filters -->
+<% if @filter_prop_key.present? || @segment_id.present? %>
+  <div class="flex items-center gap-2 mb-4">
+    <% if @filter_prop_key.present? %>
+      <span class="inline-flex items-center gap-1 text-[11px] bg-[#ede9fe] text-[#5046e5] px-2.5 py-1 rounded-full">
+        User: <%= @filter_prop_key %> contains "<%= @filter_prop_value %>"
+      </span>
+    <% end %>
+    <% if @segment_id.present? %>
+      <% seg = @segments.find { |s| s.id.to_s == @segment_id.to_s } %>
+      <span class="inline-flex items-center gap-1 text-[11px] bg-[#dbeafe] text-[#2563eb] px-2.5 py-1 rounded-full">
+        Segment: <%= seg&.name %>
+      </span>
+    <% end %>
+  </div>
+<% end %>
+
+<!-- Save & Export -->
+<div class="flex items-center justify-between mb-2">
+  <div class="flex items-center gap-2">
+    <% if @saved_retentions&.any? %>
+      <span class="text-[11px] text-[#8b8ba3]">Saved:</span>
+      <% @saved_retentions.first(5).each do |report| %>
+        <%= link_to report.name, project_saved_report_path(@project, report), class: "text-[11px] text-[#5046e5] hover:underline" %>
+      <% end %>
+    <% end %>
+  </div>
+  <%= link_to "Export CSV",
+    export_csv_project_path(@project, type: "retention", from: @from, to: @to, granularity: @granularity,
+      filter_prop_key: @filter_prop_key, filter_prop_value: @filter_prop_value, segment_id: @segment_id),
+    class: "text-[11px] text-[#8b8ba3] hover:text-[#5046e5]" %>
+</div>
+
+<!-- Retention Curve Chart -->
+<% if @avg_retention.any? && @avg_retention.compact.any? %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee] p-5 mb-4">
+    <div class="flex items-center justify-between mb-4">
+      <p class="text-[13px] font-medium text-[#1a1a2e]">Average Retention Curve</p>
+      <span class="flex items-center gap-1.5 text-[11px] text-[#8b8ba3]"><span class="inline-block w-2 h-2 rounded-full bg-[#5046e5]"></span>Retention %</span>
+    </div>
+    <%
+      curve_labels = @max_offsets.times.map { |i| "#{@offset_label} #{i}" }
+      curve_data = @avg_retention.map { |v| v || 0 }
+    %>
+    <div data-controller="chart"
+         data-chart-labels-value="<%= curve_labels.to_json %>"
+         data-chart-data-value="<%= curve_data.to_json %>"
+         style="height:180px">
+      <canvas data-chart-target="canvas"></canvas>
+    </div>
+  </div>
+<% end %>
+
+<!-- Retention Grid -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] mb-4 overflow-x-auto">
+  <div class="px-4 py-2.5 border-b border-[#f0f0f5]">
+    <p class="text-[13px] font-medium text-[#1a1a2e]"><%= @granularity == "daily" ? "Daily" : "Weekly" %> Retention</p>
+  </div>
+
+  <% if @retention_data.any? %>
+    <%
+      max_cohort_size = @retention_data.map { |d| d[:cohort_size] }.max.to_f
+      max_cohort_size = 1 if max_cohort_size == 0
+    %>
+    <table class="w-full text-[12px]">
+      <thead>
+        <tr class="border-b border-[#f0f0f5] text-[11px] text-[#8b8ba3]">
+          <th class="text-left px-3 py-2 font-medium sticky left-0 bg-white z-10 min-w-[90px]">Cohort</th>
+          <th class="text-center px-2 py-2 font-medium w-[70px]">Users</th>
+          <% @max_offsets.times do |i| %>
+            <th class="text-center px-1 py-2 font-medium w-[52px]"><%= @offset_label %> <%= i %></th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% @retention_data.each do |row| %>
+          <tr class="border-t border-[#f8f8fb]">
+            <td class="px-3 py-1.5 font-medium text-[#2d2d42] sticky left-0 bg-white z-10 whitespace-nowrap"><%= row[:week].strftime("%b %d") %></td>
+            <td class="px-2 py-1.5 text-center text-[#8b8ba3]">
+              <div class="flex items-center gap-1.5 justify-center">
+                <div class="w-[30px] h-[4px] rounded-full bg-[#e8e8ee] overflow-hidden">
+                  <div class="h-full rounded-full bg-[#5046e5]" style="width:<%= (row[:cohort_size] / max_cohort_size * 100).round %>%"></div>
+                </div>
+                <span class="font-mono tabular-nums"><%= row[:cohort_size] %></span>
+              </div>
+            </td>
+            <% @max_offsets.times do |i| %>
+              <% cell = row[:retention][i] %>
+              <% if cell %>
+                <% opacity = (cell[:pct] / 100.0 * 0.85 + 0.05).round(2) %>
+                <% text_color = cell[:pct] > 40 ? "#fff" : "#4a4a68" %>
+                <td class="px-1 py-1.5 text-center" title="<%= @granularity == 'daily' ? 'Day' : 'Week' %> of <%= row[:week].strftime('%b %d') %>: <%= cell[:count] %> of <%= row[:cohort_size] %> users (<%= cell[:pct] %>%)">
+                  <div class="rounded px-1 py-0.5 text-[11px] font-medium tabular-nums" style="background: rgba(80, 70, 229, <%= opacity %>); color: <%= text_color %>">
+                    <%= cell[:pct].round(0) %>%
+                  </div>
+                </td>
+              <% else %>
+                <td class="px-1 py-1.5"></td>
+              <% end %>
+            <% end %>
+          </tr>
+        <% end %>
+
+        <!-- Average Row -->
+        <% if @avg_retention.any? %>
+          <tr class="border-t-2 border-[#e8e8ee] bg-[#fafafb]">
+            <td class="px-3 py-2 font-semibold text-[#2d2d42] sticky left-0 bg-[#fafafb] z-10">Average</td>
+            <td class="px-2 py-2 text-center text-[#8b8ba3] font-semibold">--</td>
+            <% @avg_retention.each do |avg| %>
+              <% if avg %>
+                <% opacity = (avg / 100.0 * 0.85 + 0.05).round(2) %>
+                <% text_color = avg > 40 ? "#fff" : "#4a4a68" %>
+                <td class="px-1 py-1.5 text-center">
+                  <div class="rounded px-1 py-0.5 text-[11px] font-bold tabular-nums" style="background: rgba(80, 70, 229, <%= opacity %>); color: <%= text_color %>">
+                    <%= avg.round(0) %>%
+                  </div>
+                </td>
+              <% else %>
+                <td class="px-1 py-1.5"></td>
+              <% end %>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="p-10 text-center">
+      <svg class="w-10 h-10 mx-auto text-[#e8e8ee] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      <p class="text-[13px] text-[#8b8ba3]">No retention data available. Users need a <code>first_seen_at</code> timestamp to be placed in cohorts.</p>
+    </div>
+  <% end %>
+</div>

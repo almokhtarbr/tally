@@ -1,0 +1,7 @@
+<%= render "projects/page_header",
+  title: @project.name, subtitle: "Edit Segment: #{@segment.name}", back_path: project_segment_path(@project, @segment),
+  date_form_url: nil, from: nil, to: nil,
+  project: @project, active_tab: "Segments" %>
+
+<%= render "segments/form", segment: @segment, project: @project,
+    available_events: @available_events, available_user_properties: @available_user_properties %>

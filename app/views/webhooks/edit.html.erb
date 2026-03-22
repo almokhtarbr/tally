@@ -1,0 +1,6 @@
+<%= render "projects/page_header",
+  title: @project.name, subtitle: "Edit Webhook", back_path: project_webhooks_path(@project),
+  date_form_url: nil, from: nil, to: nil,
+  project: @project, active_tab: "Webhooks" %>
+
+<%= render "webhooks/form", webhook: @webhook, project: @project, available_events: @available_events %>

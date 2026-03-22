@@ -1,0 +1,170 @@
+<%= turbo_stream_from "project_#{@project.id}_events" %>
+
+<%= render "projects/page_header",
+  title: @project.name, subtitle: @project.url, back_path: root_path,
+  date_form_url: forms_project_path(@project), from: @from, to: @to,
+  project: @project, active_tab: "Forms" %>
+
+<!-- KPI Row -->
+<%
+  total_submissions = @forms.sum { |f| f[:submissions] }
+  total_interactions = @forms.sum { |f| f[:interactions] }
+  avg_completion = @forms.any? ? (@forms.sum { |f| f[:completion_rate] } / @forms.size).round(1) : 0
+  avg_time = @forms.any? ? (@forms.sum { |f| f[:avg_time_ms] } / @forms.size / 1000.0).round(1) : 0
+%>
+<div class="bg-white rounded-xl border border-[#e8e8ee] mb-4 grid grid-cols-4 divide-x divide-[#f0f0f5]">
+  <div class="px-4 py-3">
+    <p class="text-[11px] text-[#8b8ba3] font-medium">Detected Forms</p>
+    <span class="text-[20px] font-semibold text-[#1a1a2e] leading-none mt-1 block tabular-nums"><%= @forms.size %></span>
+  </div>
+  <div class="px-4 py-3">
+    <p class="text-[11px] text-[#8b8ba3] font-medium">Total Submissions</p>
+    <span class="text-[20px] font-semibold text-[#1a1a2e] leading-none mt-1 block tabular-nums"><%= number_with_delimiter(total_submissions) %></span>
+  </div>
+  <div class="px-4 py-3">
+    <p class="text-[11px] text-[#8b8ba3] font-medium">Avg Completion Rate</p>
+    <span class="text-[20px] font-semibold leading-none mt-1 block tabular-nums" style="color:<%= avg_completion < 50 ? '#ef4444' : '#22c55e' %>"><%= avg_completion %>%</span>
+  </div>
+  <div class="px-4 py-3">
+    <p class="text-[11px] text-[#8b8ba3] font-medium">Avg Time to Complete</p>
+    <span class="text-[20px] font-semibold text-[#1a1a2e] leading-none mt-1 block tabular-nums"><%= avg_time %>s</span>
+  </div>
+</div>
+
+<!-- Submission Trend Chart -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] p-5 mb-4">
+  <div class="flex items-center justify-between mb-4">
+    <p class="text-[13px] font-medium text-[#1a1a2e]">Form Submissions</p>
+    <span class="flex items-center gap-1.5 text-[11px] text-[#8b8ba3]"><span style="width:8px;height:8px;border-radius:50%;background:#5046e5;display:inline-block"></span>Submissions</span>
+  </div>
+  <% if @chart_dates.any? %>
+    <div data-controller="chart"
+         data-chart-labels-value="<%= @chart_dates.map { |d| Date.parse(d).strftime('%b %d') }.to_json %>"
+         data-chart-data-value="<%= @chart_dates.map { |d| (@daily_submissions[Date.parse(d)] || 0) }.to_json %>"
+         data-chart-color-value="#5046e5"
+         style="height:180px">
+      <canvas data-chart-target="canvas"></canvas>
+    </div>
+  <% else %>
+    <p class="text-[13px] text-[#8b8ba3] py-10 text-center">No data.</p>
+  <% end %>
+</div>
+
+<!-- Forms List -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] mb-4">
+  <div class="px-4 py-2.5 border-b border-[#f0f0f5]">
+    <p class="text-[13px] font-medium text-[#1a1a2e]">Detected Forms</p>
+  </div>
+  <% if @forms.any? %>
+    <!-- Header -->
+    <div class="flex items-center px-4 py-2 border-b border-[#f0f0f5] text-[11px] text-[#8b8ba3] font-medium">
+      <span class="flex-1">Form</span>
+      <span class="w-[80px] text-right">Submits</span>
+      <span class="w-[100px] text-right">Completion</span>
+      <span class="w-[100px] text-right">Abandonment</span>
+      <span class="w-[100px] text-right">Avg Time</span>
+    </div>
+    <div class="divide-y divide-[#f8f8fb]">
+      <% @forms.each do |form| %>
+        <% active = @selected_form == form[:selector] %>
+        <%= link_to forms_project_path(@project, from: @from, to: @to, form: form[:selector]),
+          class: "flex items-center px-4 py-3 hover:bg-[#fafafb] transition-colors block #{active ? 'bg-[#f5f3ff]' : ''}" do %>
+          <div class="flex-1 min-w-0">
+            <span class="text-[13px] text-[#2d2d42] font-mono truncate block"><%= form[:selector].to_s.truncate(60) %></span>
+          </div>
+          <span class="w-[80px] text-right text-[13px] font-mono tabular-nums text-[#2d2d42]"><%= form[:submissions] %></span>
+          <span class="w-[100px] text-right text-[13px] font-mono tabular-nums" style="color:<%= form[:completion_rate] < 50 ? '#ef4444' : '#22c55e' %>"><%= form[:completion_rate] %>%</span>
+          <span class="w-[100px] text-right text-[13px] font-mono tabular-nums" style="color:<%= form[:abandonment_rate] > 50 ? '#ef4444' : '#8b8ba3' %>"><%= form[:abandonment_rate] %>%</span>
+          <span class="w-[100px] text-right text-[13px] font-mono tabular-nums text-[#8b8ba3]"><%= (form[:avg_time_ms] / 1000.0).round(1) %>s</span>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-[13px] text-[#8b8ba3] py-10 text-center">No form submissions detected in this period. Forms are auto-detected from <code class="bg-[#f0f0f5] px-1.5 py-0.5 rounded text-[12px]">$form_submit</code> events.</p>
+  <% end %>
+</div>
+
+<% if @selected_form.present? && @field_funnel.present? %>
+  <!-- Form Detail Drill-Down -->
+  <div class="grid grid-cols-2 gap-4 mb-4">
+
+    <!-- Field Drop-off Funnel -->
+    <div class="bg-white rounded-xl border border-[#e8e8ee]">
+      <div class="px-4 py-2.5 border-b border-[#f0f0f5]">
+        <p class="text-[13px] font-medium text-[#1a1a2e]">Field Drop-off Funnel</p>
+        <p class="text-[11px] text-[#8b8ba3] mt-0.5">Sessions that interacted with each field</p>
+      </div>
+      <% if @field_funnel.any? %>
+        <% max_sessions = @field_funnel.first[:sessions].to_f %>
+        <% max_sessions = 1 if max_sessions == 0 %>
+        <div class="p-4 space-y-2">
+          <% @field_funnel.each_with_index do |step, idx| %>
+            <% pct = (step[:sessions] / max_sessions * 100).round(1) %>
+            <% is_submit = step[:field] == "Submit" %>
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[12px] <%= is_submit ? 'font-semibold text-[#5046e5]' : 'text-[#2d2d42]' %>"><%= step[:field] %></span>
+                <span class="text-[12px] font-mono tabular-nums text-[#8b8ba3]"><%= step[:sessions] %> (<%= pct %>%)</span>
+              </div>
+              <div class="h-2 bg-[#f0f0f5] rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all" style="width:<%= pct %>%; background:<%= is_submit ? '#5046e5' : '#7c6cff' %>"></div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-[13px] text-[#8b8ba3] p-4 text-center">No field data.</p>
+      <% end %>
+    </div>
+
+    <!-- Time-per-Field Heatmap -->
+    <div class="bg-white rounded-xl border border-[#e8e8ee]">
+      <div class="px-4 py-2.5 border-b border-[#f0f0f5]">
+        <p class="text-[13px] font-medium text-[#1a1a2e]">Time Per Field</p>
+        <p class="text-[11px] text-[#8b8ba3] mt-0.5">Average time spent on each field (slow = friction)</p>
+      </div>
+      <% if @field_times.present? && @field_times.any? %>
+        <% max_time = @field_times.first[:avg_ms].to_f %>
+        <% max_time = 1 if max_time == 0 %>
+        <div class="divide-y divide-[#f8f8fb]">
+          <% @field_times.each do |ft| %>
+            <% intensity = [ft[:avg_ms] / max_time, 1].min %>
+            <% bg_color = intensity > 0.7 ? '#fef2f2' : (intensity > 0.4 ? '#fffbeb' : '#f0fdf4') %>
+            <% text_color = intensity > 0.7 ? '#ef4444' : (intensity > 0.4 ? '#f59e0b' : '#22c55e') %>
+            <div class="flex items-center justify-between px-4 py-2.5" style="background:<%= bg_color %>">
+              <span class="text-[13px] text-[#2d2d42]"><%= ft[:field] %></span>
+              <div class="flex items-center gap-3">
+                <span class="text-[11px] text-[#8b8ba3] tabular-nums"><%= ft[:count] %> interactions</span>
+                <span class="text-[13px] font-mono font-semibold tabular-nums" style="color:<%= text_color %>"><%= (ft[:avg_ms] / 1000.0).round(1) %>s</span>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-[13px] text-[#8b8ba3] p-4 text-center">No timing data.</p>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Frustration Indicators -->
+  <% if @frustration_events.present? && @frustration_events.any? %>
+    <div class="bg-white rounded-xl border border-[#e8e8ee] mb-4">
+      <div class="px-4 py-2.5 border-b border-[#f0f0f5]">
+        <p class="text-[13px] font-medium text-[#1a1a2e]">Frustration Indicators</p>
+        <p class="text-[11px] text-[#8b8ba3] mt-0.5">Rage clicks and dead clicks on pages with this form</p>
+      </div>
+      <div class="grid grid-cols-2 divide-x divide-[#f0f0f5]">
+        <% rage = @frustration_events["$rage_click"] || 0 %>
+        <% dead = @frustration_events["$dead_click"] || 0 %>
+        <div class="px-4 py-3">
+          <p class="text-[11px] text-[#8b8ba3] font-medium">Rage Clicks</p>
+          <span class="text-[20px] font-semibold leading-none mt-1 block tabular-nums" style="color:<%= rage > 0 ? '#ef4444' : '#1a1a2e' %>"><%= rage %></span>
+        </div>
+        <div class="px-4 py-3">
+          <p class="text-[11px] text-[#8b8ba3] font-medium">Dead Clicks</p>
+          <span class="text-[20px] font-semibold leading-none mt-1 block tabular-nums" style="color:<%= dead > 0 ? '#f59e0b' : '#1a1a2e' %>"><%= dead %></span>
+        </div>
+      </div>
+    </div>
+  <% end %>
+<% end %>

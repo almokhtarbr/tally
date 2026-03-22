@@ -1,0 +1,46 @@
+<%= render "projects/page_header",
+  title: @project.name, subtitle: @project.url, back_path: root_path,
+  date_form_url: nil, from: nil, to: nil,
+  project: @project, active_tab: "Webhooks" %>
+
+<div class="flex items-center justify-between mb-4">
+  <p class="text-[13px] font-medium text-[#1a1a2e]">Webhooks</p>
+  <%= link_to "New Webhook", new_project_webhook_path(@project), class: "bg-[#5046e5] text-white text-[12px] font-medium px-4 py-[6px] rounded-md hover:bg-[#4338ca]" %>
+</div>
+
+<% if @webhooks.any? %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee]">
+    <% @webhooks.each_with_index do |webhook, idx| %>
+      <div class="<%= 'border-t border-[#f0f0f5]' if idx > 0 %> px-4 py-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full <%= webhook.active? ? 'bg-[#22c55e]' : 'bg-[#ef4444]' %>"></span>
+              <span class="text-[13px] font-medium text-[#2d2d42] font-mono"><%= webhook.url.truncate(60) %></span>
+            </div>
+            <div class="flex items-center gap-3 mt-1">
+              <span class="text-[11px] text-[#8b8ba3]">Events: <%= webhook.event_names.join(", ").truncate(50) %></span>
+              <% if webhook.failures > 0 %>
+                <span class="text-[11px] text-[#ef4444]"><%= webhook.failures %> failure<%= webhook.failures == 1 ? "" : "s" %></span>
+              <% end %>
+              <% if webhook.last_triggered_at %>
+                <span class="text-[11px] text-[#8b8ba3]">Last: <%= time_ago_in_words(webhook.last_triggered_at) %> ago</span>
+              <% end %>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <%= button_to "Test", test_project_webhook_path(@project, webhook), method: :post, class: "text-[11px] text-[#8b8ba3] hover:text-[#5046e5]" %>
+            <%= button_to webhook.active? ? "Disable" : "Enable", toggle_project_webhook_path(@project, webhook), method: :post, class: "text-[11px] #{webhook.active? ? 'text-[#f59e0b]' : 'text-[#22c55e]'} hover:underline" %>
+            <%= link_to "Edit", edit_project_webhook_path(@project, webhook), class: "text-[11px] text-[#8b8ba3] hover:text-[#5046e5]" %>
+            <%= link_to "Delete", project_webhook_path(@project, webhook), data: { turbo_method: :delete, turbo_confirm: "Delete this webhook?" }, class: "text-[11px] text-[#ef4444] hover:underline" %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee] p-10 text-center">
+    <p class="text-[13px] text-[#8b8ba3] mb-3">No webhooks configured. Add one to get notified when events happen.</p>
+    <%= link_to "Add Webhook", new_project_webhook_path(@project), class: "text-[13px] text-[#5046e5] hover:underline" %>
+  </div>
+<% end %>

@@ -1,0 +1,53 @@
+service: tally
+
+image: your-registry/tally
+
+servers:
+  web:
+    - YOUR_SERVER_IP
+
+proxy:
+  ssl: true
+  host: tally.yourdomain.com
+
+registry:
+  server: ghcr.io
+  username: your-username
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+env:
+  secret:
+    - RAILS_MASTER_KEY
+    - POSTGRES_PASSWORD
+  clear:
+    SOLID_QUEUE_IN_PUMA: true
+    DB_HOST: tally-db
+
+aliases:
+  console: app exec --interactive --reuse "bin/rails console"
+  shell: app exec --interactive --reuse "bash"
+  logs: app logs -f
+  dbc: app exec --interactive --reuse "bin/rails dbconsole --include-password"
+
+volumes:
+  - "tally_storage:/rails/storage"
+
+asset_path: /rails/public/assets
+
+builder:
+  arch: amd64
+
+accessories:
+  db:
+    image: postgres:17
+    host: YOUR_SERVER_IP
+    port: "127.0.0.1:5432:5432"
+    env:
+      clear:
+        POSTGRES_DB: tally_production
+        POSTGRES_USER: tally
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - tally_pgdata:/var/lib/postgresql/data

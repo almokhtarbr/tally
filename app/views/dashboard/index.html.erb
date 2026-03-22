@@ -1,0 +1,43 @@
+<div class="max-w-5xl">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-[15px] font-semibold text-[#1a1a2e]">Projects</h1>
+    <%= link_to new_project_path, class: "inline-flex items-center gap-1.5 bg-[#5046e5] text-white text-[13px] font-medium px-3.5 py-[7px] rounded-lg hover:bg-[#4338ca] transition shadow-sm" do %>
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+      New project
+    <% end %>
+  </div>
+
+  <% if @projects.any? %>
+    <div class="space-y-3">
+      <% @projects.each do |project| %>
+        <%= link_to project_path(project), class: "flex items-center justify-between bg-white rounded-xl border border-[#e8e8ee] px-5 py-4 hover:border-[#5046e5]/30 transition group" do %>
+          <div class="flex items-center gap-4">
+            <div class="w-9 h-9 rounded-lg bg-[#5046e5]/5 flex items-center justify-center">
+              <span class="text-[13px] font-bold text-[#5046e5]"><%= project.name[0].upcase %></span>
+            </div>
+            <div>
+              <p class="text-[14px] font-medium text-[#1a1a2e] group-hover:text-[#5046e5] transition"><%= project.name %></p>
+              <p class="text-[12px] text-[#8b8ba3]"><%= project.url.presence || "—" %></p>
+            </div>
+          </div>
+          <div class="flex items-center gap-8">
+            <div class="text-right">
+              <p class="text-[15px] font-semibold text-[#1a1a2e]"><%= number_with_delimiter(project.events_count) %></p>
+              <p class="text-[11px] text-[#8b8ba3]">events</p>
+            </div>
+            <div class="text-right">
+              <p class="text-[15px] font-semibold text-[#1a1a2e]"><%= project.user_profiles.count %></p>
+              <p class="text-[11px] text-[#8b8ba3]">users</p>
+            </div>
+            <svg class="w-4 h-4 text-[#c4c4d4] group-hover:text-[#5046e5] transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="bg-white rounded-xl border border-[#e8e8ee] p-12 text-center">
+      <p class="text-[13px] text-[#8b8ba3]">No projects yet</p>
+      <%= link_to "Create project", new_project_path, class: "mt-2 inline-block text-[13px] text-[#5046e5] hover:underline" %>
+    </div>
+  <% end %>
+</div>

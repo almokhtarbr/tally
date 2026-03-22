@@ -1,0 +1,84 @@
+<%= render "projects/page_header",
+  title: @project.name, subtitle: "Segment: #{@segment.name}", back_path: project_segments_path(@project),
+  date_form_url: nil, from: nil, to: nil,
+  project: @project, active_tab: "Segments" %>
+
+<div class="bg-white rounded-xl border border-[#e8e8ee] mb-4 grid grid-cols-2 divide-x divide-[#f0f0f5]">
+  <div class="px-4 py-3">
+    <p class="text-[11px] text-[#8b8ba3] font-medium">Matching Users</p>
+    <span class="text-[24px] font-semibold text-[#1a1a2e] leading-none mt-1 block tabular-nums"><%= number_with_delimiter(@user_count) %></span>
+  </div>
+  <div class="px-4 py-3">
+    <p class="text-[11px] text-[#8b8ba3] font-medium">Conditions</p>
+    <span class="text-[24px] font-semibold text-[#1a1a2e] leading-none mt-1 block tabular-nums"><%= @segment.conditions.size %></span>
+  </div>
+</div>
+
+<% if @segment.description.present? %>
+  <p class="text-[13px] text-[#8b8ba3] mb-4"><%= @segment.description %></p>
+<% end %>
+
+<!-- Conditions -->
+<div class="bg-white rounded-xl border border-[#e8e8ee] p-4 mb-4">
+  <p class="text-[12px] font-medium text-[#2d2d42] mb-2">Conditions</p>
+  <% @segment.conditions.each do |cond| %>
+    <div class="flex items-center gap-1.5 text-[12px] text-[#4a4a68] mb-1">
+      <% if cond["type"] == "event" %>
+        <span class="bg-[#f5f3ff] text-[#5046e5] px-2 py-0.5 rounded text-[11px]">Event</span>
+        <span>User <strong><%= cond["operator"] %></strong> "<%= cond["event"] %>"</span>
+        <% if cond["days"].present? %>
+          <span class="text-[#8b8ba3]">in the last <%= cond["days"] %> days</span>
+        <% end %>
+        <% if cond["count"].present? && cond["operator"] == "did_at_least" %>
+          <span class="text-[#8b8ba3]">at least <%= cond["count"] %> times</span>
+        <% end %>
+      <% else %>
+        <span class="bg-[#dbeafe] text-[#2563eb] px-2 py-0.5 rounded text-[11px]">Property</span>
+        <span>"<%= cond["key"] %>" <strong><%= cond["operator"] %></strong></span>
+        <% if cond["value"].present? %>
+          <span>"<%= cond["value"] %>"</span>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<!-- Use This Segment -->
+<div class="flex items-center gap-3 mb-4">
+  <%= link_to "Use in Funnels", funnels_project_path(@project, segment_id: @segment.id), class: "text-[12px] text-[#5046e5] hover:underline" %>
+  <%= link_to "Use in Retention", retention_project_path(@project, segment_id: @segment.id), class: "text-[12px] text-[#5046e5] hover:underline" %>
+  <%= link_to "Edit", edit_project_segment_path(@project, @segment), class: "text-[12px] text-[#8b8ba3] hover:text-[#5046e5]" %>
+</div>
+
+<!-- Matching Users -->
+<div class="bg-white rounded-xl border border-[#e8e8ee]">
+  <div class="px-4 py-2.5 border-b border-[#f0f0f5]">
+    <p class="text-[13px] font-medium text-[#1a1a2e]">Matching Users (first 50)</p>
+  </div>
+  <% if @users.any? %>
+    <table class="w-full">
+      <thead>
+        <tr class="border-b border-[#f0f0f5] text-[11px] text-[#8b8ba3]">
+          <th class="text-left px-4 py-2 font-medium">User</th>
+          <th class="text-left px-4 py-2 font-medium">First Seen</th>
+          <th class="text-left px-4 py-2 font-medium">Last Seen</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @users.each do |user| %>
+          <tr class="border-t border-[#f8f8fb]">
+            <td class="px-4 py-2">
+              <%= link_to user.external_id, user_profile_project_path(@project, user_profile_id: user.id), class: "text-[13px] text-[#5046e5] hover:underline" %>
+            </td>
+            <td class="px-4 py-2 text-[12px] text-[#8b8ba3]"><%= user.first_seen_at&.strftime("%b %d, %Y") %></td>
+            <td class="px-4 py-2 text-[12px] text-[#8b8ba3]"><%= user.last_seen_at&.strftime("%b %d, %Y") %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="p-8 text-center">
+      <p class="text-[13px] text-[#8b8ba3]">No users match this segment.</p>
+    </div>
+  <% end %>
+</div>

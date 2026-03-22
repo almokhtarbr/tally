@@ -1,0 +1,31 @@
+<div class="max-w-3xl mx-auto py-8 px-4">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-[18px] font-semibold text-[#1a1a2e]">Team Members</h1>
+      <p class="text-[13px] text-[#8b8ba3]">Manage who can access your Tally dashboard.</p>
+    </div>
+    <%= link_to "Invite User", new_user_path, class: "bg-[#5046e5] text-white text-[12px] font-medium px-4 py-[6px] rounded-md hover:bg-[#4338ca]" %>
+  </div>
+
+  <div class="bg-white rounded-xl border border-[#e8e8ee]">
+    <% @users.each_with_index do |user, idx| %>
+      <div class="<%= 'border-t border-[#f0f0f5]' if idx > 0 %> px-4 py-3 flex items-center justify-between">
+        <div>
+          <span class="text-[13px] font-medium text-[#2d2d42]"><%= user.name %></span>
+          <span class="text-[12px] text-[#8b8ba3] ml-2"><%= user.email %></span>
+          <span class="text-[10px] text-[#8b8ba3] bg-[#fafafb] px-1.5 py-0.5 rounded ml-2 uppercase font-medium"><%= user.role %></span>
+        </div>
+        <div class="flex items-center gap-3">
+          <%= link_to "Edit", edit_user_path(user), class: "text-[11px] text-[#8b8ba3] hover:text-[#5046e5]" %>
+          <% if user != current_user %>
+            <%= link_to "Remove", user_path(user), data: { turbo_method: :delete, turbo_confirm: "Remove #{user.name}?" }, class: "text-[11px] text-[#ef4444] hover:underline" %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="mt-6">
+    <%= link_to "Back to Dashboard", root_path, class: "text-[12px] text-[#8b8ba3] hover:text-[#5046e5]" %>
+  </div>
+</div>
