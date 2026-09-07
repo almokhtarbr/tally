@@ -8,6 +8,9 @@ production:
   drop_expired_partitions:
     class: DropExpiredPartitionsJob
     schedule: every day at 2:15am
+  enforce_project_retention:
+    class: EnforceProjectRetentionJob
+    schedule: every day at 3am
   anomaly_detection:
     class: AnomalyDetectionJob
     schedule: every 10 minutes

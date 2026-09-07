@@ -1176,6 +1176,6 @@ class ProjectsController < ApplicationController
   end
 
   def project_params
-    params.require(:project).permit(:name, :url, :conversion_event, :avg_conversion_value)
+    params.require(:project).permit(:name, :url, :conversion_event, :avg_conversion_value, :retention_days)
   end
 end
