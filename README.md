@@ -18,7 +18,7 @@ Built for SaaS apps that only need the 20% of analytics features that matter: ev
 - **Segments** — Behavioral + property-based user cohorts
 - **Webhooks** — HMAC-signed HTTP webhooks with event filtering and auto-disable
 - **CSV Export** — Export events, users, funnels, and retention data
-- **Multi-SDK Support** — Ruby, JavaScript, Python, and Node.js SDKs (all zero-dependency)
+- **Multi-SDK Support** — Ruby, JavaScript, Python, Node.js, and Go SDKs (all zero-dependency)
 
 ## Tech Stack
 
