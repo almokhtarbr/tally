@@ -66,7 +66,7 @@ Rails.application.routes.draw do
     resources :segments
     resources :saved_reports, only: [ :index, :show, :create, :destroy ]
     resources :dashboards, only: [ :index, :show, :create, :destroy ] do
-      resources :dashboard_widgets, only: [ :create, :destroy ]
+      resources :dashboard_widgets, only: [ :create, :update, :destroy ]
     end
     resources :webhooks do
       member do

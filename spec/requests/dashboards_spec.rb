@@ -56,6 +56,23 @@ RSpec.describe "Dashboards", type: :request do
       }.to change(dashboard.dashboard_widgets, :count).by(1)
     end
 
+    it "pins with a chosen day range and can change it later" do
+      post project_dashboard_dashboard_widgets_path(project, dashboard),
+        params: { saved_report_id: report.id, range_days: 90 }
+      widget = dashboard.dashboard_widgets.last
+      expect(widget.range_days).to eq(90)
+
+      patch project_dashboard_dashboard_widget_path(project, dashboard, widget),
+        params: { range_days: 7 }
+      expect(widget.reload.range_days).to eq(7)
+    end
+
+    it "falls back to the default for a junk range" do
+      post project_dashboard_dashboard_widgets_path(project, dashboard),
+        params: { saved_report_id: report.id, range_days: 999 }
+      expect(dashboard.dashboard_widgets.last.range_days).to eq(30)
+    end
+
     it "removes a widget" do
       widget = dashboard.pin(report)
       expect {
