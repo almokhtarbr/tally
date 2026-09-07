@@ -47,16 +47,18 @@ reports, CSV export, HMAC webhooks with auto-disable.
   per widget, changeable inline. — #14
 - **Audit log** — per-project Activity tab recording settings, sharing, and
   webhook changes with the actor and timestamp. — #15
+- **Dashboard widget sparklines** — a no-JS inline-SVG trend line under each
+  widget's headline number. — #16
 
 ## Next
 
 Priority order — small, self-contained, each a PR:
 
 1. **Scheduled report exports** — email a saved report's CSV on a cadence.
-2. **Sparkline on dashboard widgets** — a tiny trend line under the headline
-   number, not just the total.
-3. **Audit log filters** — by actor and by action type, plus CSV export of
+2. **Audit log filters** — by actor and by action type, plus CSV export of
    the log.
+3. **Dashboard sharing** — reuse the `/s/:token` public link for a whole
+   custom dashboard, not just the default project view.
 
 ## Not building (out of scope)
 
