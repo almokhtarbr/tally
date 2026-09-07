@@ -8,6 +8,9 @@ production:
   anomaly_detection:
     class: AnomalyDetectionJob
     schedule: every 10 minutes
+  weekly_digests:
+    class: SendWeeklyDigestsJob
+    schedule: every Monday at 8am
 
 development:
   partition_maintenance:

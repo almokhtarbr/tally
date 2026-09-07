@@ -1,0 +1,23 @@
+<%= @project.name %> — weekly digest
+<%= @digest.from.strftime("%b %-d") %> - <%= @digest.to.strftime("%b %-d, %Y") %>
+
+<% p = ->(c) { c.pct.nil? ? "" : " (#{c.pct >= 0 ? '+' : ''}#{c.pct}% vs last week)" } -%>
+Events:       <%= number_with_delimiter(@digest.events.current) %><%= p.call(@digest.events) %>
+Active users: <%= number_with_delimiter(@digest.active_users.current) %><%= p.call(@digest.active_users) %>
+New users:    <%= number_with_delimiter(@digest.new_users) %>
+
+<% if (top = @digest.top_events).any? -%>
+Top events:
+<% top.each do |name, count| -%>
+  <%= name %>: <%= number_with_delimiter(count) %>
+<% end -%>
+<% end -%>
+<% if (anomalies = @digest.anomalies).any? -%>
+
+Anomalies this week:
+<% anomalies.limit(5).each do |a| -%>
+  <%= a.description %>
+<% end -%>
+<% end -%>
+
+Manage weekly digests: <%= edit_profile_users_url %>
