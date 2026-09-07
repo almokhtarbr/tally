@@ -2,6 +2,15 @@
 
 Last updated: March 16, 2026
 
+> **Out of date — read `ROADMAP.md` for current status.** Since this was
+> written, the codebase shipped: segments, saved reports, webhooks (HMAC +
+> Slack-formatted), anomaly detection, sessions, funnel/retention property
+> filters, multi-user auth with roles, a full RSpec suite + CI, weekly email
+> digests, O(1) + per-project data retention, a public read-only dashboard
+> link, and a Go SDK. The "Priority 1" gaps below (property filtering,
+> segmentation, CSV export, webhooks/alerts) are **done**. The doc is kept for
+> the competitive framing, not the status.
+
 ---
 
 ## 1. Is Tally Generic (Not Tied to Vroom)?
