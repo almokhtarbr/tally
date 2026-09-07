@@ -1,0 +1,21 @@
+{
+  "ignored_warnings": [
+    {
+      "fingerprint": "2cc4a6f458366a831d5ed74086986aa7dbd35fd504839001efee07609883b791",
+      "note": "Reviewed: internal (partition names from pg_catalog / regex-validated), or admin-gated (role). Not user-influenced."
+    },
+    {
+      "fingerprint": "98a9d09bfb759b799395f40c502af1a6565063e7395238d9fcb53776b5a0fb44",
+      "note": "Reviewed: internal (partition names from pg_catalog / regex-validated), or admin-gated (role). Not user-influenced."
+    },
+    {
+      "fingerprint": "c98048cf2c6c866ed48a8d54ac2ecbe76b1aed39c03e228a9e85040eccf0fa43",
+      "note": "Reviewed: internal (partition names from pg_catalog / regex-validated), or admin-gated (role). Not user-influenced."
+    },
+    {
+      "fingerprint": "f15b2fc09eab5c1a5acdd4d1f17e533debb49ceb7af365e5a392e88a5b9d370d",
+      "note": "Reviewed: internal (partition names from pg_catalog / regex-validated), or admin-gated (role). Not user-influenced."
+    }
+  ],
+  "brakeman_version": "8.0.4"
+}
