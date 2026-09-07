@@ -76,7 +76,8 @@ CREATE TABLE public.dashboard_widgets (
     saved_report_id bigint NOT NULL,
     "position" integer DEFAULT 0 NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    range_days integer DEFAULT 30 NOT NULL
 );
 
 
@@ -1578,6 +1579,7 @@ ALTER TABLE ONLY public.anomalies
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260906180000'),
 ('20260906170000'),
 ('20260906160000'),
 ('20260906150000'),

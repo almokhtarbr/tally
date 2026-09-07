@@ -10,10 +10,10 @@ class Dashboard < ApplicationRecord
 
   # Add a saved report as the next widget on this board. Ignores a report
   # that's already pinned here so the board stays a set.
-  def pin(saved_report)
+  def pin(saved_report, range_days: DashboardWidget::DEFAULT_DAYS)
     return if dashboard_widgets.exists?(saved_report_id: saved_report.id)
 
     next_position = (dashboard_widgets.maximum(:position) || -1) + 1
-    dashboard_widgets.create!(saved_report: saved_report, position: next_position)
+    dashboard_widgets.create!(saved_report: saved_report, position: next_position, range_days: range_days)
   end
 end

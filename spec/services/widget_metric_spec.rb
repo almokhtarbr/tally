@@ -27,6 +27,18 @@ RSpec.describe WidgetMetric do
     expect(result.label).to eq("signup · last 30d")
   end
 
+  it "honors a custom day window" do
+    rollup("signup", 5, days_ago: 3)
+    rollup("signup", 8, days_ago: 20) # inside 30d, outside 7d
+
+    report = create(:saved_report, project: project, report_type: "event_explorer",
+      configuration: { "event_name" => "signup" })
+
+    expect(described_class.new(report, days: 7).call.value).to eq(5)
+    expect(described_class.new(report, days: 30).call.value).to eq(13)
+    expect(described_class.new(report, days: 7).call.label).to eq("signup · last 7d")
+  end
+
   it "sums all non-system events when no event_name is configured" do
     rollup("signup", 3)
     rollup("login", 7)

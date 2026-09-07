@@ -43,15 +43,17 @@ reports, CSV export, HMAC webhooks with auto-disable.
 - **Member invitations** — invite with no password to email a 7-day
   `generates_token_for(:invitation)` set-your-password link; "Invite
   pending" badge + resend. — #13
+- **Per-widget date range** on custom dashboards — 7 / 30 / 90-day headline
+  per widget, changeable inline. — #14
 
 ## Next
 
 Priority order — small, self-contained, each a PR:
 
 1. **Scheduled report exports** — email a saved report's CSV on a cadence.
-2. **Per-widget date range** on custom dashboards (currently a fixed 30-day
-   headline).
-3. **Audit log** — who changed project settings / members, and when.
+2. **Audit log** — who changed project settings / members, and when.
+3. **Sparkline on dashboard widgets** — a tiny trend line under the headline
+   number, not just the total.
 
 ## Not building (out of scope)
 
