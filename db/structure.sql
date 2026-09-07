@@ -67,6 +67,71 @@ CREATE TABLE public.ar_internal_metadata (
 
 
 --
+-- Name: dashboard_widgets; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.dashboard_widgets (
+    id bigint NOT NULL,
+    dashboard_id bigint NOT NULL,
+    saved_report_id bigint NOT NULL,
+    "position" integer DEFAULT 0 NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: dashboard_widgets_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.dashboard_widgets_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: dashboard_widgets_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.dashboard_widgets_id_seq OWNED BY public.dashboard_widgets.id;
+
+
+--
+-- Name: dashboards; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.dashboards (
+    id bigint NOT NULL,
+    project_id bigint NOT NULL,
+    name character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: dashboards_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.dashboards_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: dashboards_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.dashboards_id_seq OWNED BY public.dashboards.id;
+
+
+--
 -- Name: event_daily_rollups; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -581,6 +646,20 @@ ALTER TABLE ONLY public.anomalies ALTER COLUMN id SET DEFAULT nextval('public.an
 
 
 --
+-- Name: dashboard_widgets id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dashboard_widgets ALTER COLUMN id SET DEFAULT nextval('public.dashboard_widgets_id_seq'::regclass);
+
+
+--
+-- Name: dashboards id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dashboards ALTER COLUMN id SET DEFAULT nextval('public.dashboards_id_seq'::regclass);
+
+
+--
 -- Name: event_daily_rollups id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -671,6 +750,22 @@ ALTER TABLE ONLY public.anomalies
 
 ALTER TABLE ONLY public.ar_internal_metadata
     ADD CONSTRAINT ar_internal_metadata_pkey PRIMARY KEY (key);
+
+
+--
+-- Name: dashboard_widgets dashboard_widgets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dashboard_widgets
+    ADD CONSTRAINT dashboard_widgets_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: dashboards dashboards_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dashboards
+    ADD CONSTRAINT dashboards_pkey PRIMARY KEY (id);
 
 
 --
@@ -1003,6 +1098,34 @@ CREATE INDEX index_anomalies_on_project_id ON public.anomalies USING btree (proj
 --
 
 CREATE INDEX index_anomalies_on_project_id_and_event_name_and_detected_at ON public.anomalies USING btree (project_id, event_name, detected_at);
+
+
+--
+-- Name: index_dashboard_widgets_on_dashboard_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_dashboard_widgets_on_dashboard_id ON public.dashboard_widgets USING btree (dashboard_id);
+
+
+--
+-- Name: index_dashboard_widgets_on_dashboard_id_and_position; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_dashboard_widgets_on_dashboard_id_and_position ON public.dashboard_widgets USING btree (dashboard_id, "position");
+
+
+--
+-- Name: index_dashboard_widgets_on_saved_report_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_dashboard_widgets_on_saved_report_id ON public.dashboard_widgets USING btree (saved_report_id);
+
+
+--
+-- Name: index_dashboards_on_project_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_dashboards_on_project_id ON public.dashboards USING btree (project_id);
 
 
 --
@@ -1360,6 +1483,14 @@ ALTER TABLE ONLY public.segments
 
 
 --
+-- Name: dashboards fk_rails_5ad01c40ce; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dashboards
+    ADD CONSTRAINT fk_rails_5ad01c40ce FOREIGN KEY (project_id) REFERENCES public.projects(id);
+
+
+--
 -- Name: user_profiles fk_rails_608d5e5b5d; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1376,6 +1507,14 @@ ALTER TABLE ONLY public.sessions
 
 
 --
+-- Name: dashboard_widgets fk_rails_834da0b127; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dashboard_widgets
+    ADD CONSTRAINT fk_rails_834da0b127 FOREIGN KEY (dashboard_id) REFERENCES public.dashboards(id);
+
+
+--
 -- Name: identity_aliases fk_rails_84703a8006; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1389,6 +1528,14 @@ ALTER TABLE ONLY public.identity_aliases
 
 ALTER TABLE ONLY public.project_memberships
     ADD CONSTRAINT fk_rails_86b046ec96 FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: dashboard_widgets fk_rails_8b9c11cc59; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dashboard_widgets
+    ADD CONSTRAINT fk_rails_8b9c11cc59 FOREIGN KEY (saved_report_id) REFERENCES public.saved_reports(id);
 
 
 --
@@ -1430,6 +1577,7 @@ ALTER TABLE ONLY public.anomalies
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260906160000'),
 ('20260906150000'),
 ('20260906140000'),
 ('20260906130000'),

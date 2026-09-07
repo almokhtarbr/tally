@@ -1,0 +1,51 @@
+<%= render "projects/page_header",
+  title: @dashboard.name, subtitle: @project.name, back_path: project_dashboards_path(@project),
+  date_form_url: nil, from: nil, to: nil,
+  project: @project, active_tab: "Dashboards" %>
+
+<% if @widgets.any? %>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+    <% @widgets.each do |widget| %>
+      <% report = widget.saved_report %>
+      <div class="bg-white rounded-xl border border-[#e8e8ee] p-4">
+        <div class="flex items-start justify-between">
+          <div>
+            <%= link_to report.name, project_saved_report_path(@project, report), class: "text-[13px] font-medium text-[#5046e5] hover:underline" %>
+            <p class="text-[11px] text-[#8b8ba3] mt-0.5"><%= report.report_type.humanize %></p>
+          </div>
+          <%= button_to "×", project_dashboard_dashboard_widget_path(@project, @dashboard, widget),
+            method: :delete, form: { data: { turbo_confirm: "Remove this widget?" } },
+            class: "text-[13px] text-[#b4b4c8] hover:text-[#ef4444] leading-none" %>
+        </div>
+        <% if (m = widget.metric) %>
+          <p class="text-[26px] font-bold text-[#1a1a2e] mt-3"><%= number_with_delimiter(m.value) %></p>
+          <p class="text-[11px] text-[#8b8ba3]"><%= m.label %></p>
+        <% else %>
+          <%= link_to "Open report →", project_saved_report_path(@project, report), class: "text-[12px] text-[#5046e5] hover:underline inline-block mt-3" %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee] p-10 text-center mb-6">
+    <p class="text-[13px] text-[#8b8ba3]">This dashboard is empty. Pin a saved report below.</p>
+  </div>
+<% end %>
+
+<div class="bg-white rounded-xl border border-[#e8e8ee] p-4">
+  <p class="text-[13px] font-medium text-[#1a1a2e] mb-3">Add a widget</p>
+  <% if @pinnable.any? %>
+    <%= form_with url: project_dashboard_dashboard_widgets_path(@project, @dashboard), method: :post, class: "flex items-center gap-2" do %>
+      <select name="saved_report_id" class="text-[13px] text-[#4a4a68] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-2 py-[7px] min-w-[220px]">
+        <% @pinnable.each do |report| %>
+          <option value="<%= report.id %>"><%= report.name %> (<%= report.report_type.humanize %>)</option>
+        <% end %>
+      </select>
+      <button type="submit" class="bg-[#5046e5] text-white text-[13px] font-medium px-4 py-2 rounded-md hover:bg-[#4338ca]">Pin</button>
+    <% end %>
+  <% else %>
+    <p class="text-[12px] text-[#8b8ba3]">
+      No more saved reports to add. <%= link_to "Save a report", project_saved_reports_path(@project), class: "text-[#5046e5] hover:underline" %> first.
+    </p>
+  <% end %>
+</div>

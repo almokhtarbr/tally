@@ -5,6 +5,7 @@ class Project < ApplicationRecord
   has_many :identity_aliases, dependent: :destroy
   has_many :segments, dependent: :destroy
   has_many :saved_reports, dependent: :destroy
+  has_many :dashboards, dependent: :destroy
   has_many :webhooks, dependent: :destroy
   has_many :anomalies, dependent: :destroy
   has_many :project_memberships, dependent: :destroy
