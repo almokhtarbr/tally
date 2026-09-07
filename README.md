@@ -29,7 +29,7 @@ Built for SaaS apps that only need the 20% of analytics features that matter: ev
 
 ## Architecture Highlights
 
-- **Partitioned events table** — Monthly partitions for partition pruning, O(1) data retention, and faster vacuuming
+- **Partitioned events table** — Monthly partitions for partition pruning and faster vacuuming. Set `EVENTS_RETENTION_MONTHS` and `DropExpiredPartitionsJob` drops whole aged-out partitions nightly — O(1) retention, no row scan
 - **Pre-aggregated rollups** — `EventDailyRollup` table for O(1) dashboard reads via atomic upserts
 - **Identity resolution** — Anonymous-to-identified user merging via background jobs
 - **Rate limiting** — Rack::Attack throttling on write and read endpoints

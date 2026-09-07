@@ -5,6 +5,9 @@ production:
   partition_maintenance:
     class: PartitionMaintenanceJob
     schedule: every day at 2am
+  drop_expired_partitions:
+    class: DropExpiredPartitionsJob
+    schedule: every day at 2:15am
   anomaly_detection:
     class: AnomalyDetectionJob
     schedule: every 10 minutes
