@@ -39,6 +39,21 @@ RSpec.describe WidgetMetric do
     expect(described_class.new(report, days: 7).call.label).to eq("signup · last 7d")
   end
 
+  it "returns a zero-filled daily series across the whole window" do
+    rollup("signup", 3, days_ago: 1)
+    rollup("signup", 4, days_ago: 2)
+
+    report = create(:saved_report, project: project, report_type: "event_explorer",
+      configuration: { "event_name" => "signup" })
+
+    result = described_class.new(report, days: 7).call
+    expect(result.series.length).to eq(8) # start_date..today inclusive
+    expect(result.series.sum).to eq(7)
+    expect(result.series.last).to eq(0)       # today, no rollup
+    expect(result.series[-2]).to eq(3)        # yesterday
+    expect(result.series[-3]).to eq(4)        # two days ago
+  end
+
   it "sums all non-system events when no event_name is configured" do
     rollup("signup", 3)
     rollup("login", 7)

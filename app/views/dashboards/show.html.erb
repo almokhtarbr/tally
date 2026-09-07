@@ -20,6 +20,7 @@
         <% if (m = widget.metric) %>
           <p class="text-[26px] font-bold text-[#1a1a2e] mt-3"><%= number_with_delimiter(m.value) %></p>
           <p class="text-[11px] text-[#8b8ba3]"><%= m.label %></p>
+          <%= sparkline(m.series) %>
           <%= form_with url: project_dashboard_dashboard_widget_path(@project, @dashboard, widget), method: :patch, class: "mt-2" do %>
             <select name="range_days" onchange="this.form.requestSubmit()"
               class="text-[11px] text-[#8b8ba3] bg-[#fafafb] border border-[#e8e8ee] rounded px-1.5 py-[3px]">
