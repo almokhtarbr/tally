@@ -81,6 +81,26 @@ RSpec.describe "Projects", type: :request do
       get event_explorer_project_path(project, page: 2)
       expect(response).to have_http_status(:ok)
     end
+
+    it "renders a two-dimensional breakdown with group_by + second_group_by" do
+      now = Time.current
+      create(:event, project: project, name: "signup", properties: { "plan" => "pro", "country" => "US" }, occurred_at: now)
+      create(:event, project: project, name: "signup", properties: { "plan" => "pro", "country" => "CA" }, occurred_at: now)
+      create(:event, project: project, name: "signup", properties: { "plan" => "free", "country" => "US" }, occurred_at: now)
+
+      get event_explorer_project_path(project, group_by: "plan", second_group_by: "country")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("plan").and include("country")
+      # the primary × secondary table header
+      expect(response.body).to include("Breakdown:")
+      expect(response.body).to include("US").and include("CA")
+    end
+
+    it "keeps second_group_by in the date-range form so it survives a range change" do
+      get event_explorer_project_path(project, group_by: "plan", second_group_by: "country")
+      expect(response.body).to include('name="second_group_by" value="country"')
+    end
   end
 
   describe "GET /projects/:id/funnels" do
