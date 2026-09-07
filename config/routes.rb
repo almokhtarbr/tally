@@ -23,6 +23,10 @@ Rails.application.routes.draw do
   post "login", to: "sessions#create", as: :session
   delete "logout", to: "sessions#destroy", as: :destroy_session
 
+  resources :password_resets, only: %i[new create], path: "reset-password"
+  get "reset-password/:token", to: "password_resets#edit",   as: :edit_password_reset
+  patch "reset-password/:token", to: "password_resets#update", as: :password_reset
+
   resources :users, except: [ :show ] do
     collection do
       get :edit_profile
