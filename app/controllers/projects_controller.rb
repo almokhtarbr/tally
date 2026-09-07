@@ -4,7 +4,8 @@ class ProjectsController < ApplicationController
   include Authentication
 
   before_action :set_project, only: [ :show, :edit, :update, :destroy, :api_keys, :errors, :error_detail,
-    :event_explorer, :user_profile, :funnels, :retention, :users, :export_csv, :user_paths, :forms, :anomalies ]
+    :event_explorer, :user_profile, :funnels, :retention, :users, :export_csv, :user_paths, :forms, :anomalies,
+    :share, :unshare ]
 
   SYSTEM_EVENTS = %w[$session_start $session_end $outbound_click $dead_click $click $rage_click $form_submit $input_change $field_time $scroll_depth $page_leave $error $promise_error $network_error $server_error $copy $resize].freeze
 
@@ -142,6 +143,17 @@ class ProjectsController < ApplicationController
   def destroy
     @project.destroy
     redirect_to projects_path, notice: "Project deleted."
+  end
+
+  # Enable (or rotate) the public read-only dashboard link.
+  def share
+    @project.enable_sharing!
+    redirect_to api_keys_project_path(@project), notice: "Public dashboard link is on."
+  end
+
+  def unshare
+    @project.disable_sharing!
+    redirect_to api_keys_project_path(@project), notice: "Public dashboard link is off."
   end
 
   def api_keys; end

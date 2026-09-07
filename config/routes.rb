@@ -31,8 +31,14 @@ Rails.application.routes.draw do
   end
 
   root "dashboard#index"
+
+  # Public read-only dashboard, reached by a project's share token — no login.
+  get "s/:token", to: "public_dashboards#show", as: :public_dashboard
+
   resources :projects, only: [ :index, :show, :new, :create, :edit, :update, :destroy ] do
     member do
+      post :share
+      delete :unshare
       get :api_keys
       get :errors
       get :error_detail

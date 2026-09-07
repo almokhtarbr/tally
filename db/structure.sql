@@ -297,7 +297,8 @@ CREATE TABLE public.projects (
     updated_at timestamp(6) without time zone NOT NULL,
     conversion_event character varying DEFAULT 'purchase'::character varying,
     avg_conversion_value numeric(10,2),
-    retention_days integer
+    retention_days integer,
+    share_token character varying
 );
 
 
@@ -1068,6 +1069,13 @@ CREATE UNIQUE INDEX index_projects_on_api_secret ON public.projects USING btree 
 
 
 --
+-- Name: index_projects_on_share_token; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_projects_on_share_token ON public.projects USING btree (share_token);
+
+
+--
 -- Name: index_saved_reports_on_project_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1422,6 +1430,7 @@ ALTER TABLE ONLY public.anomalies
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260906150000'),
 ('20260906140000'),
 ('20260906130000'),
 ('20260906120000'),

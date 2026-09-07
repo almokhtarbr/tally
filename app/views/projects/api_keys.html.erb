@@ -20,6 +20,29 @@
     </div>
   </div>
 
+  <!-- Public dashboard link -->
+  <div class="rounded-lg bg-white border border-gray-200 p-5">
+    <div class="flex items-center gap-2 mb-1">
+      <span class="inline-flex rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600 uppercase">Share</span>
+      <h2 class="text-sm font-medium text-gray-700">Public dashboard</h2>
+    </div>
+    <p class="text-xs text-gray-400 mb-3">A read-only, no-login view of the headline numbers. Anyone with the link can see it.</p>
+    <% if @project.shared? %>
+      <div class="rounded-md bg-gray-50 border border-gray-100 px-3 py-2.5 mb-3">
+        <code class="text-sm text-gray-800 select-all break-all"><%= public_dashboard_url(@project.share_token) %></code>
+      </div>
+      <div class="flex gap-2">
+        <%= button_to "Rotate link", share_project_path(@project), method: :post,
+              class: "rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200" %>
+        <%= button_to "Turn off", unshare_project_path(@project), method: :delete,
+              class: "rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100" %>
+      </div>
+    <% else %>
+      <%= button_to "Enable public link", share_project_path(@project), method: :post,
+            class: "rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-500" %>
+    <% end %>
+  </div>
+
   <!-- API Secret -->
   <div class="rounded-lg bg-white border border-gray-200 p-5">
     <div class="flex items-center gap-2 mb-1">
