@@ -1,6 +1,6 @@
 # Feature Comparison — Tally vs Competitors
 
-Last updated: March 16, 2026
+Last updated: March 16, 2026 (status: see ROADMAP.md — the "missing" Priority-1 rows below have since shipped)
 
 ---
 

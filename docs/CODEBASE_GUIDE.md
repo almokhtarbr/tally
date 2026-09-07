@@ -6,7 +6,7 @@ A structured tour of the entire Tally codebase. Each chapter covers one logical 
 
 ## Chapter 1: The Foundation
 
-Tally is a self-hosted product analytics service — a focused replacement for Mixpanel. You add a tracking snippet to your app, events flow in through an API, and Tally stores them, rolls them up, and displays trends on a dashboard. It supports four SDKs (JS, Ruby, Python, Node), user identification, funnels, retention analysis, error tracking, anomaly detection, and webhooks.
+Tally is a self-hosted product analytics service — a focused replacement for Mixpanel. You add a tracking snippet to your app, events flow in through an API, and Tally stores them, rolls them up, and displays trends on a dashboard. It supports five SDKs (JS, Ruby, Python, Node, Go), user identification, funnels, retention analysis, error tracking, anomaly detection, and webhooks.
 
 ### The core database tables
 
