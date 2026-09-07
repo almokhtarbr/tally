@@ -26,7 +26,7 @@ RSpec.describe "Webhooks", type: :request do
     it "creates a webhook" do
       expect {
         post project_webhooks_path(project), params: {
-          webhook: { url: "https://hooks.example.com/new", event_names: ["*"] }
+          webhook: { url: "https://hooks.example.com/new", event_names: [ "*" ] }
         }
       }.to change(Webhook, :count).by(1)
       expect(response).to redirect_to(project_webhooks_path(project))
@@ -52,7 +52,7 @@ RSpec.describe "Webhooks", type: :request do
     it "updates webhook" do
       webhook = create(:webhook, project: project)
       patch project_webhook_path(project, webhook), params: {
-        webhook: { url: "https://hooks.example.com/updated", event_names: ["signup"] }
+        webhook: { url: "https://hooks.example.com/updated", event_names: [ "signup" ] }
       }
       expect(response).to redirect_to(project_webhooks_path(project))
       expect(webhook.reload.url).to eq("https://hooks.example.com/updated")

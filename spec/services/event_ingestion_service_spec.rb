@@ -60,14 +60,14 @@ RSpec.describe EventIngestionService do
     end
 
     it "fires matching webhooks" do
-      webhook = create(:webhook, project: project, event_names: ["signup"])
+      webhook = create(:webhook, project: project, event_names: [ "signup" ])
       expect {
         EventIngestionService.track(project: project, event_name: "signup")
       }.to have_enqueued_job(WebhookDeliveryJob)
     end
 
     it "does not fire non-matching webhooks" do
-      create(:webhook, project: project, event_names: ["purchase"])
+      create(:webhook, project: project, event_names: [ "purchase" ])
       expect {
         EventIngestionService.track(project: project, event_name: "signup")
       }.not_to have_enqueued_job(WebhookDeliveryJob)

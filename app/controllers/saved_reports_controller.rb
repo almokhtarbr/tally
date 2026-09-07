@@ -2,7 +2,7 @@ class SavedReportsController < ApplicationController
   include Authentication
 
   before_action :set_project
-  before_action :set_report, only: [:show, :destroy]
+  before_action :set_report, only: [ :show, :destroy ]
 
   def index
     @reports = @project.saved_reports.recent

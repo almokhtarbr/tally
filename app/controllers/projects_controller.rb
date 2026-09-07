@@ -3,8 +3,8 @@ require "csv"
 class ProjectsController < ApplicationController
   include Authentication
 
-  before_action :set_project, only: [:show, :edit, :update, :destroy, :api_keys, :errors, :error_detail,
-    :event_explorer, :user_profile, :funnels, :retention, :users, :export_csv, :user_paths, :forms, :anomalies]
+  before_action :set_project, only: [ :show, :edit, :update, :destroy, :api_keys, :errors, :error_detail,
+    :event_explorer, :user_profile, :funnels, :retention, :users, :export_csv, :user_paths, :forms, :anomalies ]
 
   SYSTEM_EVENTS = %w[$session_start $session_end $outbound_click $dead_click $click $rage_click $form_submit $input_change $field_time $scroll_depth $page_leave $error $promise_error $network_error $server_error $copy $resize].freeze
 
@@ -38,8 +38,8 @@ class ProjectsController < ApplicationController
     @pageviews = current_rollups.where(event_name: "$pageview").sum(:count)
     @prev_pageviews = prev_rollups.where(event_name: "$pageview").sum(:count)
 
-    @custom_events = current_rollups.where.not(event_name: SYSTEM_EVENTS + ["$pageview"]).sum(:count)
-    @prev_custom_events = prev_rollups.where.not(event_name: SYSTEM_EVENTS + ["$pageview"]).sum(:count)
+    @custom_events = current_rollups.where.not(event_name: SYSTEM_EVENTS + [ "$pageview" ]).sum(:count)
+    @prev_custom_events = prev_rollups.where.not(event_name: SYSTEM_EVENTS + [ "$pageview" ]).sum(:count)
 
     @sessions = current_rollups.where(event_name: "$session_start").sum(:count)
     @prev_sessions = prev_rollups.where(event_name: "$session_start").sum(:count)
@@ -60,12 +60,12 @@ class ProjectsController < ApplicationController
       .where(event_name: "$pageview")
       .group(:date).sum(:count)
     @daily_custom = current_rollups
-      .where.not(event_name: SYSTEM_EVENTS + ["$pageview"])
+      .where.not(event_name: SYSTEM_EVENTS + [ "$pageview" ])
       .group(:date).sum(:count)
     @chart_dates = (@from..@to).map(&:to_s)
 
     @top_custom_events = current_rollups
-      .where.not(event_name: SYSTEM_EVENTS + ["$pageview"])
+      .where.not(event_name: SYSTEM_EVENTS + [ "$pageview" ])
       .group(:event_name).sum(:count)
       .sort_by { |_, count| -count }
       .first(10)
@@ -100,9 +100,9 @@ class ProjectsController < ApplicationController
     @rage_clicks = @project.events.where(name: "$rage_click", occurred_at: current_time_range).count
     @dead_clicks = @project.events.where(name: "$dead_click", occurred_at: current_time_range).count
     @form_submits = @project.events.where(name: "$form_submit", occurred_at: current_time_range).count
-    @js_errors = @project.events.where(name: ["$error", "$promise_error", "$server_error"], occurred_at: current_time_range).count
+    @js_errors = @project.events.where(name: [ "$error", "$promise_error", "$server_error" ], occurred_at: current_time_range).count
     @daily_errors_sparkline = current_rollups
-      .where(event_name: ["$error", "$promise_error", "$server_error"])
+      .where(event_name: [ "$error", "$promise_error", "$server_error" ])
       .group(:date).sum(:count)
 
     @active_anomalies = @project.anomalies.active.recent.limit(5)
@@ -155,7 +155,7 @@ class ProjectsController < ApplicationController
     @metric = params[:metric] || "total"
     @group_by = params[:group_by].presence
     @second_group_by = params[:second_group_by].presence
-    @page = [params[:page].to_i, 1].max
+    @page = [ params[:page].to_i, 1 ].max
     per_page = 50
 
     base_events = @project.events
@@ -176,7 +176,7 @@ class ProjectsController < ApplicationController
         .where.not(user_profile_id: nil)
         .group(Arel.sql("occurred_at::date"))
         .select(Arel.sql("occurred_at::date as date, COUNT(DISTINCT user_profile_id) as count"))
-        .map { |r| [r.date, r.count] }.to_h
+        .map { |r| [ r.date, r.count ] }.to_h
     elsif params[:prop_key].blank? && params[:event_name].present?
       @daily_counts = @project.event_daily_rollups
         .where(date: @from..@to, event_name: params[:event_name])
@@ -264,7 +264,7 @@ class ProjectsController < ApplicationController
 
     @recent_sessions = build_user_sessions(@user)
 
-    @page = [params[:page].to_i, 1].max
+    @page = [ params[:page].to_i, 1 ].max
     per_page = 50
     @timeline_events = @user.events
       .where(occurred_at: @current_time_range)
@@ -345,10 +345,10 @@ class ProjectsController < ApplicationController
     prev_time_range = prev_from.beginning_of_day..prev_to.end_of_day
     current_range = @from..@to
 
-    all_error_events = ["$error", "$promise_error", "$server_error", "$network_error"]
-    js_error_events = ["$error", "$promise_error"]
-    server_error_events = ["$server_error"]
-    network_error_events = ["$network_error"]
+    all_error_events = [ "$error", "$promise_error", "$server_error", "$network_error" ]
+    js_error_events = [ "$error", "$promise_error" ]
+    server_error_events = [ "$server_error" ]
+    network_error_events = [ "$network_error" ]
 
     @error_type = params[:error_type] || "all"
     filtered_events = case @error_type
@@ -434,7 +434,7 @@ class ProjectsController < ApplicationController
     @from = Date.parse(params[:from] || 7.days.ago.to_date.to_s)
     @to = Date.parse(params[:to] || Date.current.to_s)
     current_time_range = @from.beginning_of_day..@to.end_of_day
-    error_events = ["$error", "$promise_error", "$server_error"]
+    error_events = [ "$error", "$promise_error", "$server_error" ]
 
     @message = params[:message] || ""
 
@@ -506,7 +506,7 @@ class ProjectsController < ApplicationController
   def users
     set_date_range
     @query = params[:q]
-    @page = [params[:page].to_i, 1].max
+    @page = [ params[:page].to_i, 1 ].max
     per_page = 50
 
     base = @project.user_profiles.order(last_seen_at: :desc)
@@ -530,7 +530,7 @@ class ProjectsController < ApplicationController
       .where.not(user_profile_id: nil)
       .select(:user_profile_id).distinct.count
 
-    @total_pages = [(@total_users.to_f / per_page).ceil, 1].max
+    @total_pages = [ (@total_users.to_f / per_page).ceil, 1 ].max
 
     @users = base
       .select("user_profiles.*, (SELECT COUNT(*) FROM events WHERE events.user_profile_id = user_profiles.id) as events_count")
@@ -564,11 +564,11 @@ class ProjectsController < ApplicationController
   def user_paths
     set_date_range
     @start_event = params[:start_event].presence || "$pageview"
-    @depth = [params[:depth].to_i, 1].max
-    @depth = [@depth, 5].min
+    @depth = [ params[:depth].to_i, 1 ].max
+    @depth = [ @depth, 5 ].min
 
     @available_events = @project.event_daily_rollups
-      .where.not(event_name: SYSTEM_EVENTS - ["$pageview"])
+      .where.not(event_name: SYSTEM_EVENTS - [ "$pageview" ])
       .distinct.pluck(:event_name).sort
 
     @paths = compute_user_paths(@start_event, @depth)
@@ -593,7 +593,7 @@ class ProjectsController < ApplicationController
       submit_count = submit_sessions.size
 
       field_interactions = @project.events
-        .where(name: ["$input_change", "$field_time"], occurred_at: @current_time_range)
+        .where(name: [ "$input_change", "$field_time" ], occurred_at: @current_time_range)
         .where("properties->>'form_selector' = ? OR properties->>'selector' LIKE ?", selector, "#{selector}%")
         .pluck(Arel.sql("COALESCE(properties->>'anonymous_id', user_profile_id::text)"))
         .compact.uniq
@@ -685,7 +685,7 @@ class ProjectsController < ApplicationController
       .group(:user_profile_id)
       .minimum(:occurred_at)
 
-    results = [{ name: steps.first, count: user_ids.size, step_pct: 100.0, total_pct: 100.0, dropoff: 0, median_time: nil }]
+    results = [ { name: steps.first, count: user_ids.size, step_pct: 100.0, total_pct: 100.0, dropoff: 0, median_time: nil } ]
     total_start = user_ids.size
 
     steps.each_cons(2).with_index do |(prev_step, curr_step), idx|
@@ -825,7 +825,7 @@ class ProjectsController < ApplicationController
       cohorts[day] << uid
     end
 
-    max_days = [(@to - @from).to_i, 30].min
+    max_days = [ (@to - @from).to_i, 30 ].min
 
     @retention_data = []
     cohorts.each do |cohort_day, user_ids|
@@ -840,7 +840,7 @@ class ProjectsController < ApplicationController
         .to_h
 
       cohort_size = user_ids.size
-      max_offset = [(@to - cohort_day).to_i, max_days].min
+      max_offset = [ (@to - cohort_day).to_i, max_days ].min
       retention = (0..max_offset).map do |offset|
         target_day = cohort_day + offset.days
         active_count = active_days_by_user.count { |_, days| days.include?(target_day) }
@@ -852,7 +852,7 @@ class ProjectsController < ApplicationController
     end
 
     @retention_data.sort_by! { |d| d[:week] }
-    @max_offsets = [@retention_data.map { |d| d[:retention].size }.max || 0, max_days + 1].min
+    @max_offsets = [ @retention_data.map { |d| d[:retention].size }.max || 0, max_days + 1 ].min
     @offset_label = "Day"
   end
 
@@ -974,7 +974,7 @@ class ProjectsController < ApplicationController
       session_events = @project.events
         .where(user_profile_id: user_profile_id)
         .where(occurred_at: started_at..(started_at + 30.minutes))
-        .where.not(name: SYSTEM_EVENTS - ["$pageview"])
+        .where.not(name: SYSTEM_EVENTS - [ "$pageview" ])
         .order(:occurred_at)
         .limit(depth + 1)
         .pluck(:name, Arel.sql("COALESCE(properties->>'path', name)"))
@@ -996,7 +996,7 @@ class ProjectsController < ApplicationController
       .includes(:user_profile)
 
     CSV.generate do |csv|
-      csv << ["Event", "User", "Timestamp", "Properties"]
+      csv << [ "Event", "User", "Timestamp", "Properties" ]
       events.each do |event|
         csv << [
           event.name,
@@ -1012,7 +1012,7 @@ class ProjectsController < ApplicationController
     users = @project.user_profiles.order(last_seen_at: :desc).limit(10_000)
 
     CSV.generate do |csv|
-      csv << ["External ID", "First Seen", "Last Seen", "Properties"]
+      csv << [ "External ID", "First Seen", "Last Seen", "Properties" ]
       users.each do |user|
         csv << [
           user.external_id,
@@ -1035,9 +1035,9 @@ class ProjectsController < ApplicationController
     results = compute_funnel(@steps, @window)
 
     CSV.generate do |csv|
-      csv << ["Step", "Users", "Step Conversion %", "Overall Conversion %", "Drop-off", "Median Time (s)"]
+      csv << [ "Step", "Users", "Step Conversion %", "Overall Conversion %", "Drop-off", "Median Time (s)" ]
       results.each do |step|
-        csv << [step[:name], step[:count], step[:step_pct], step[:total_pct], step[:dropoff], step[:median_time]]
+        csv << [ step[:name], step[:count], step[:step_pct], step[:total_pct], step[:dropoff], step[:median_time] ]
       end
     end
   end
@@ -1055,10 +1055,10 @@ class ProjectsController < ApplicationController
     end
 
     CSV.generate do |csv|
-      headers = ["Cohort", "Users"] + @max_offsets.times.map { |i| "#{@offset_label} #{i}" }
+      headers = [ "Cohort", "Users" ] + @max_offsets.times.map { |i| "#{@offset_label} #{i}" }
       csv << headers
       @retention_data.each do |row|
-        values = [row[:week].strftime("%Y-%m-%d"), row[:cohort_size]]
+        values = [ row[:week].strftime("%Y-%m-%d"), row[:cohort_size] ]
         @max_offsets.times do |i|
           cell = row[:retention][i]
           values << (cell ? "#{cell[:pct]}%" : "")
@@ -1070,7 +1070,7 @@ class ProjectsController < ApplicationController
 
   def build_form_detail(selector)
     field_events = @project.events
-      .where(name: ["$input_change", "$field_time"], occurred_at: @current_time_range)
+      .where(name: [ "$input_change", "$field_time" ], occurred_at: @current_time_range)
       .where("properties->>'form_selector' = ? OR properties->>'selector' LIKE ?", selector, "#{selector}%")
 
     field_sessions = field_events
@@ -1121,7 +1121,7 @@ class ProjectsController < ApplicationController
     @frustration_events = []
     if page_paths.any?
       @frustration_events = @project.events
-        .where(name: ["$rage_click", "$dead_click"], occurred_at: @current_time_range)
+        .where(name: [ "$rage_click", "$dead_click" ], occurred_at: @current_time_range)
         .where("properties->>'path' IN (?)", page_paths)
         .group(:name)
         .count
@@ -1129,7 +1129,7 @@ class ProjectsController < ApplicationController
   end
 
   def compute_error_business_impact(current_time_range)
-    all_error_events = ["$error", "$promise_error", "$server_error", "$network_error"]
+    all_error_events = [ "$error", "$promise_error", "$server_error", "$network_error" ]
     conversion_event = @project.conversion_event.presence || "purchase"
 
     error_user_ids = @project.events

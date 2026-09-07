@@ -3,7 +3,7 @@ class SessionsController < ApplicationController
 
   layout "session"
 
-  skip_before_action :authenticate!, only: [:new, :create]
+  skip_before_action :authenticate!, only: [ :new, :create ]
 
   def new
     redirect_to root_path if signed_in?

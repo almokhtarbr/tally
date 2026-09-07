@@ -2,14 +2,14 @@ class WebhooksController < ApplicationController
   include Authentication
 
   before_action :set_project
-  before_action :set_webhook, only: [:edit, :update, :destroy, :toggle, :test]
+  before_action :set_webhook, only: [ :edit, :update, :destroy, :toggle, :test ]
 
   def index
     @webhooks = @project.webhooks.order(created_at: :desc)
   end
 
   def new
-    @webhook = @project.webhooks.build(event_names: ["*"])
+    @webhook = @project.webhooks.build(event_names: [ "*" ])
     @available_events = available_events
   end
 
@@ -70,6 +70,6 @@ class WebhooksController < ApplicationController
   end
 
   def available_events
-    ["*"] + @project.event_daily_rollups.distinct.pluck(:event_name).sort
+    [ "*" ] + @project.event_daily_rollups.distinct.pluck(:event_name).sort
   end
 end

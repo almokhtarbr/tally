@@ -1,5 +1,5 @@
 Rails.application.routes.draw do
-  match "/api/v1/*path", to: proc { [204, {}, [""]] }, via: :options
+  match "/api/v1/*path", to: proc { [ 204, {}, [ "" ] ] }, via: :options
 
   namespace :api do
     namespace :v1 do
@@ -23,7 +23,7 @@ Rails.application.routes.draw do
   post "login", to: "sessions#create", as: :session
   delete "logout", to: "sessions#destroy", as: :destroy_session
 
-  resources :users, except: [:show] do
+  resources :users, except: [ :show ] do
     collection do
       get :edit_profile
       patch :update_profile
@@ -31,7 +31,7 @@ Rails.application.routes.draw do
   end
 
   root "dashboard#index"
-  resources :projects, only: [:index, :show, :new, :create, :edit, :update, :destroy] do
+  resources :projects, only: [ :index, :show, :new, :create, :edit, :update, :destroy ] do
     member do
       get :api_keys
       get :errors
@@ -48,7 +48,7 @@ Rails.application.routes.draw do
     end
 
     resources :segments
-    resources :saved_reports, only: [:index, :show, :create, :destroy]
+    resources :saved_reports, only: [ :index, :show, :create, :destroy ]
     resources :webhooks do
       member do
         post :toggle

@@ -22,7 +22,7 @@ RSpec.describe "Saved Reports", type: :request do
           saved_report: {
             name: "My Funnel",
             report_type: "funnel",
-            configuration: { steps: ["signup", "purchase"], window: "7d" }
+            configuration: { steps: [ "signup", "purchase" ], window: "7d" }
           }
         }
       }.to change(SavedReport, :count).by(1)
@@ -39,9 +39,9 @@ RSpec.describe "Saved Reports", type: :request do
 
   describe "GET /projects/:project_id/saved_reports/:id (show redirects)" do
     it "redirects funnel report to funnels page" do
-      report = create(:saved_report, project: project, report_type: "funnel", configuration: { "steps" => ["signup"], "window" => "7d" })
+      report = create(:saved_report, project: project, report_type: "funnel", configuration: { "steps" => [ "signup" ], "window" => "7d" })
       get project_saved_report_path(project, report)
-      expect(response).to redirect_to(funnels_project_path(project, steps: ["signup"], window: "7d"))
+      expect(response).to redirect_to(funnels_project_path(project, steps: [ "signup" ], window: "7d"))
     end
 
     it "redirects retention report to retention page" do

@@ -28,7 +28,7 @@ RSpec.describe "Segments", type: :request do
         post project_segments_path(project), params: {
           segment: {
             name: "Purchasers",
-            conditions: [{ type: "event", event: "purchase", operator: "did", days: "30" }]
+            conditions: [ { type: "event", event: "purchase", operator: "did", days: "30" } ]
           }
         }
       }.to change(Segment, :count).by(1)
@@ -40,7 +40,7 @@ RSpec.describe "Segments", type: :request do
         post project_segments_path(project), params: {
           segment: {
             name: "Pro Users",
-            conditions: [{ type: "property", key: "plan", operator: "equals", value: "pro" }]
+            conditions: [ { type: "property", key: "plan", operator: "equals", value: "pro" } ]
           }
         }
       }.to change(Segment, :count).by(1)
