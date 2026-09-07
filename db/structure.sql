@@ -67,6 +67,40 @@ CREATE TABLE public.ar_internal_metadata (
 
 
 --
+-- Name: audit_events; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.audit_events (
+    id bigint NOT NULL,
+    project_id bigint NOT NULL,
+    user_id bigint,
+    action character varying NOT NULL,
+    summary character varying NOT NULL,
+    metadata jsonb DEFAULT '{}'::jsonb NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: audit_events_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.audit_events_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: audit_events_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.audit_events_id_seq OWNED BY public.audit_events.id;
+
+
+--
 -- Name: dashboard_widgets; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -648,6 +682,13 @@ ALTER TABLE ONLY public.anomalies ALTER COLUMN id SET DEFAULT nextval('public.an
 
 
 --
+-- Name: audit_events id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_events ALTER COLUMN id SET DEFAULT nextval('public.audit_events_id_seq'::regclass);
+
+
+--
 -- Name: dashboard_widgets id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -752,6 +793,14 @@ ALTER TABLE ONLY public.anomalies
 
 ALTER TABLE ONLY public.ar_internal_metadata
     ADD CONSTRAINT ar_internal_metadata_pkey PRIMARY KEY (key);
+
+
+--
+-- Name: audit_events audit_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_events
+    ADD CONSTRAINT audit_events_pkey PRIMARY KEY (id);
 
 
 --
@@ -1100,6 +1149,27 @@ CREATE INDEX index_anomalies_on_project_id ON public.anomalies USING btree (proj
 --
 
 CREATE INDEX index_anomalies_on_project_id_and_event_name_and_detected_at ON public.anomalies USING btree (project_id, event_name, detected_at);
+
+
+--
+-- Name: index_audit_events_on_project_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_audit_events_on_project_id ON public.audit_events USING btree (project_id);
+
+
+--
+-- Name: index_audit_events_on_project_id_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_audit_events_on_project_id_and_created_at ON public.audit_events USING btree (project_id, created_at);
+
+
+--
+-- Name: index_audit_events_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_audit_events_on_user_id ON public.audit_events USING btree (user_id);
 
 
 --
@@ -1557,6 +1627,14 @@ ALTER TABLE ONLY public.identity_aliases
 
 
 --
+-- Name: audit_events fk_rails_d27dff91d1; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_events
+    ADD CONSTRAINT fk_rails_d27dff91d1 FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
 -- Name: webhooks fk_rails_d90278b6a9; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1573,12 +1651,21 @@ ALTER TABLE ONLY public.anomalies
 
 
 --
+-- Name: audit_events fk_rails_f97ffa6043; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_events
+    ADD CONSTRAINT fk_rails_f97ffa6043 FOREIGN KEY (project_id) REFERENCES public.projects(id);
+
+
+--
 -- PostgreSQL database dump complete
 --
 
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260906190000'),
 ('20260906180000'),
 ('20260906170000'),
 ('20260906160000'),

@@ -1,0 +1,27 @@
+<%= render "projects/page_header",
+  title: @project.name, subtitle: @project.url, back_path: root_path,
+  date_form_url: nil, from: nil, to: nil,
+  project: @project, active_tab: "Activity" %>
+
+<p class="text-[13px] font-medium text-[#1a1a2e] mb-1">Activity log</p>
+<p class="text-[12px] text-[#8b8ba3] mb-4">Configuration changes to this project — settings, sharing, and webhooks.</p>
+
+<% if @audit_events.any? %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee]">
+    <% @audit_events.each_with_index do |event, idx| %>
+      <div class="<%= 'border-t border-[#f0f0f5]' if idx > 0 %> px-4 py-3 flex items-baseline justify-between gap-4">
+        <div class="min-w-0">
+          <span class="text-[13px] text-[#2d2d42]"><%= event.summary %></span>
+          <span class="text-[11px] text-[#8b8ba3] ml-2">by <%= event.actor_name %></span>
+        </div>
+        <span class="text-[11px] text-[#b4b4c8] whitespace-nowrap" title="<%= event.created_at.iso8601 %>">
+          <%= time_ago_in_words(event.created_at) %> ago
+        </span>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee] p-10 text-center">
+    <p class="text-[13px] text-[#8b8ba3]">Nothing logged yet. Changes to project settings, the public link, and webhooks will show up here.</p>
+  </div>
+<% end %>

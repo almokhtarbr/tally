@@ -45,15 +45,18 @@ reports, CSV export, HMAC webhooks with auto-disable.
   pending" badge + resend. — #13
 - **Per-widget date range** on custom dashboards — 7 / 30 / 90-day headline
   per widget, changeable inline. — #14
+- **Audit log** — per-project Activity tab recording settings, sharing, and
+  webhook changes with the actor and timestamp. — #15
 
 ## Next
 
 Priority order — small, self-contained, each a PR:
 
 1. **Scheduled report exports** — email a saved report's CSV on a cadence.
-2. **Audit log** — who changed project settings / members, and when.
-3. **Sparkline on dashboard widgets** — a tiny trend line under the headline
+2. **Sparkline on dashboard widgets** — a tiny trend line under the headline
    number, not just the total.
+3. **Audit log filters** — by actor and by action type, plus CSV export of
+   the log.
 
 ## Not building (out of scope)
 
