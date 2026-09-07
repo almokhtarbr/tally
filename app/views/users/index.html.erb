@@ -14,8 +14,14 @@
           <span class="text-[13px] font-medium text-[#2d2d42]"><%= user.name %></span>
           <span class="text-[12px] text-[#8b8ba3] ml-2"><%= user.email %></span>
           <span class="text-[10px] text-[#8b8ba3] bg-[#fafafb] px-1.5 py-0.5 rounded ml-2 uppercase font-medium"><%= user.role %></span>
+          <% if user.invitation_pending? %>
+            <span class="text-[10px] text-[#b45309] bg-[#fffbeb] border border-[#fde68a] px-1.5 py-0.5 rounded ml-2 font-medium">Invite pending</span>
+          <% end %>
         </div>
         <div class="flex items-center gap-3">
+          <% if user.invitation_pending? %>
+            <%= button_to "Resend invite", resend_invitation_user_path(user), class: "text-[11px] text-[#5046e5] hover:underline bg-transparent border-0 p-0 cursor-pointer" %>
+          <% end %>
           <%= link_to "Edit", edit_user_path(user), class: "text-[11px] text-[#8b8ba3] hover:text-[#5046e5]" %>
           <% if user != current_user %>
             <%= link_to "Remove", user_path(user), data: { turbo_method: :delete, turbo_confirm: "Remove #{user.name}?" }, class: "text-[11px] text-[#ef4444] hover:underline" %>

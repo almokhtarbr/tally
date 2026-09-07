@@ -38,16 +38,20 @@ reports, CSV export, HMAC webhooks with auto-disable.
   wipes sessions on reset. — #10
 - **Custom dashboards** — any number of named boards per project; pin saved
   reports as widgets, count-shaped reports show a headline metric. — #11
+- **Multi-property breakdown on trends** — the event explorer's
+  `group_by × second_group_by` table now survives a date-range change. — #12
+- **Member invitations** — invite with no password to email a 7-day
+  `generates_token_for(:invitation)` set-your-password link; "Invite
+  pending" badge + resend. — #13
 
 ## Next
 
 Priority order — small, self-contained, each a PR:
 
-1. **Multi-property breakdown on trends** — group-by two dimensions. _(the
-   query + view already exist in the event explorer; needs a dedicated spec
-   and a UX pass.)_
-2. **Email verification** for new accounts, reusing the reset-token pattern.
-3. **Scheduled report exports** — email a saved report's CSV on a cadence.
+1. **Scheduled report exports** — email a saved report's CSV on a cadence.
+2. **Per-widget date range** on custom dashboards (currently a fixed 30-day
+   headline).
+3. **Audit log** — who changed project settings / members, and when.
 
 ## Not building (out of scope)
 

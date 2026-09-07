@@ -1,0 +1,37 @@
+<div class="min-h-screen bg-[#fafafb] flex items-center justify-center">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-6">
+      <h1 class="text-[22px] font-bold text-[#1a1a2e]">Join Tally</h1>
+      <p class="text-[13px] text-[#8b8ba3] mt-1">Set a password for <%= @user.email %></p>
+    </div>
+    <div class="bg-white rounded-xl border border-[#e8e8ee] p-6">
+      <% if @user.errors.any? %>
+        <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+          <% @user.errors.full_messages.each do |m| %>
+            <p class="text-[12px] text-red-700"><%= m %></p>
+          <% end %>
+        </div>
+      <% end %>
+      <%= form_with url: invitation_path(token: params[:token]), method: :patch, class: "space-y-4" do %>
+        <div>
+          <label class="text-[12px] text-[#4a4a68] font-medium block mb-1">Name</label>
+          <input type="text" name="name" value="<%= @user.name %>" required autofocus
+                 class="w-full text-[13px] text-[#2d2d42] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-3 py-2">
+        </div>
+        <div>
+          <label class="text-[12px] text-[#4a4a68] font-medium block mb-1">Password</label>
+          <input type="password" name="password" required
+                 class="w-full text-[13px] text-[#2d2d42] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-3 py-2">
+        </div>
+        <div>
+          <label class="text-[12px] text-[#4a4a68] font-medium block mb-1">Confirm password</label>
+          <input type="password" name="password_confirmation" required
+                 class="w-full text-[13px] text-[#2d2d42] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-3 py-2">
+        </div>
+        <button type="submit" class="w-full bg-[#5046e5] text-white text-[13px] font-medium py-2.5 rounded-md hover:bg-[#4338ca]">
+          Set password &amp; sign in
+        </button>
+      <% end %>
+    </div>
+  </div>
+</div>

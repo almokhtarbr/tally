@@ -1,0 +1,6 @@
+<%= @invited_by&.name || "An admin" %> invited you to the Tally analytics dashboard.
+
+Set your password and sign in (link valid for 7 days):
+<%= edit_invitation_url(token: @token) %>
+
+If you weren't expecting this, ignore this email.

@@ -27,7 +27,13 @@ Rails.application.routes.draw do
   get "reset-password/:token", to: "password_resets#edit",   as: :edit_password_reset
   patch "reset-password/:token", to: "password_resets#update", as: :password_reset
 
+  get   "invitations/:token", to: "invitations#edit",   as: :edit_invitation
+  patch "invitations/:token", to: "invitations#update", as: :invitation
+
   resources :users, except: [ :show ] do
+    member do
+      post :resend_invitation
+    end
     collection do
       get :edit_profile
       patch :update_profile
