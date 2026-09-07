@@ -1,0 +1,54 @@
+<% pct = ->(c) { c.pct.nil? ? "" : " (#{c.pct >= 0 ? '+' : ''}#{c.pct}% vs last week)" } %>
+
+<h1 style="font-family: Arial, sans-serif; font-size: 20px; margin: 0 0 4px;">
+  <%= @project.name %> — weekly digest
+</h1>
+<p style="font-family: Arial, sans-serif; color: #666; font-size: 13px; margin: 0 0 20px;">
+  <%= @digest.from.strftime("%b %-d") %> – <%= @digest.to.strftime("%b %-d, %Y") %>
+</p>
+
+<table style="font-family: Arial, sans-serif; border-collapse: collapse; width: 100%; max-width: 520px;">
+  <tr>
+    <td style="padding: 12px 0; border-bottom: 1px solid #eee;">
+      <strong style="font-size: 22px;"><%= number_with_delimiter(@digest.events.current) %></strong> events
+      <span style="color: #888; font-size: 12px;"><%= pct.call(@digest.events) %></span>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 12px 0; border-bottom: 1px solid #eee;">
+      <strong style="font-size: 22px;"><%= number_with_delimiter(@digest.active_users.current) %></strong> active users
+      <span style="color: #888; font-size: 12px;"><%= pct.call(@digest.active_users) %></span>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 12px 0; border-bottom: 1px solid #eee;">
+      <strong style="font-size: 22px;"><%= number_with_delimiter(@digest.new_users) %></strong> new users
+    </td>
+  </tr>
+</table>
+
+<% if (top = @digest.top_events).any? %>
+  <h2 style="font-family: Arial, sans-serif; font-size: 15px; margin: 24px 0 8px;">Top events</h2>
+  <table style="font-family: Arial, sans-serif; border-collapse: collapse; width: 100%; max-width: 520px;">
+    <% top.each do |name, count| %>
+      <tr>
+        <td style="padding: 6px 0; color: #333;"><%= name %></td>
+        <td style="padding: 6px 0; text-align: right; color: #333;"><%= number_with_delimiter(count) %></td>
+      </tr>
+    <% end %>
+  </table>
+<% end %>
+
+<% if (anomalies = @digest.anomalies).any? %>
+  <h2 style="font-family: Arial, sans-serif; font-size: 15px; margin: 24px 0 8px; color: #b45309;">Anomalies this week</h2>
+  <ul style="font-family: Arial, sans-serif; color: #333; font-size: 13px; padding-left: 18px;">
+    <% anomalies.limit(5).each do |a| %>
+      <li><%= a.description %></li>
+    <% end %>
+  </ul>
+<% end %>
+
+<p style="font-family: Arial, sans-serif; font-size: 12px; color: #999; margin-top: 28px;">
+  You're getting this because you're a member of <%= @project.name %> on Tally.
+  Manage weekly digests on your <a href="<%= edit_profile_users_url %>">profile</a>.
+</p>

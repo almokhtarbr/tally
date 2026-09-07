@@ -48,6 +48,7 @@ class UsersController < ApplicationController
   def update_profile
     @user = current_user
     if @user.update(profile_params)
+      update_digest_preferences
       redirect_to root_path, notice: "Profile updated."
     else
       render :edit_profile, status: :unprocessable_entity
@@ -67,5 +68,16 @@ class UsersController < ApplicationController
 
   def profile_params
     params.require(:user).permit(:name, :password, :password_confirmation)
+  end
+
+  # Checkboxes on the profile page toggle the weekly digest per project.
+  # Absent param means the section wasn't shown (no memberships) — leave as is.
+  def update_digest_preferences
+    return unless params.key?(:weekly_digest_project_ids)
+
+    wanted = Array(params[:weekly_digest_project_ids]).map(&:to_i)
+    @user.project_memberships.find_each do |m|
+      m.update_column(:weekly_digest, wanted.include?(m.project_id))
+    end
   end
 end

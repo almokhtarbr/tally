@@ -258,7 +258,8 @@ CREATE TABLE public.project_memberships (
     project_id bigint NOT NULL,
     role character varying DEFAULT 'viewer'::character varying NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    weekly_digest boolean DEFAULT true NOT NULL
 );
 
 
@@ -1420,6 +1421,7 @@ ALTER TABLE ONLY public.anomalies
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260906130000'),
 ('20260906120000'),
 ('20260316200003'),
 ('20260316200002'),

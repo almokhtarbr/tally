@@ -24,6 +24,24 @@
         <%= f.password_field :password_confirmation, class: "w-full text-[13px] text-[#2d2d42] bg-[#fafafb] border border-[#e8e8ee] rounded-md px-3 py-2" %>
       </div>
 
+      <% memberships = @user.project_memberships.includes(:project).sort_by { |m| m.project.name } %>
+      <% if memberships.any? %>
+        <div class="pt-2 border-t border-[#f0f0f4]">
+          <label class="text-[12px] text-[#4a4a68] font-medium block mb-2">Weekly digest emails</label>
+          <div class="space-y-1.5">
+            <% memberships.each do |m| %>
+              <label class="flex items-center gap-2 text-[13px] text-[#2d2d42]">
+                <input type="checkbox" name="weekly_digest_project_ids[]" value="<%= m.project_id %>"
+                       <%= "checked" if m.weekly_digest? %>
+                       class="rounded border-[#d8d8e0]" />
+                <%= m.project.name %>
+              </label>
+            <% end %>
+          </div>
+          <p class="text-[11px] text-[#8b8ba3] mt-1.5">Sent Monday mornings. Quiet projects don't send.</p>
+        </div>
+      <% end %>
+
       <div class="flex items-center gap-3 pt-2">
         <%= f.submit "Update Profile", class: "bg-[#5046e5] text-white text-[12px] font-medium px-4 py-[6px] rounded-md hover:bg-[#4338ca] cursor-pointer" %>
         <%= link_to "Cancel", root_path, class: "text-[12px] text-[#8b8ba3] hover:text-[#4a4a68]" %>
