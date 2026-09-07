@@ -1,3 +1,8 @@
+PATH
+  remote: vendor/watchtower-ruby
+  specs:
+    watchtower-ruby (0.1.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -461,6 +466,7 @@ DEPENDENCIES
   thruster
   turbo-rails
   tzinfo-data
+  watchtower-ruby!
   web-console
 
 BUNDLED WITH

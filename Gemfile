@@ -74,3 +74,7 @@ end
 gem "csv"
 gem "rack-attack", "~> 6.8"
 gem "rack-cors", "~> 2.0"
+
+# Error tracking / performance — the vendored Watchtower client (same one
+# Railyard runs). A no-op until WATCHTOWER_URL and WATCHTOWER_PUBLIC_KEY resolve.
+gem "watchtower-ruby", path: "vendor/watchtower-ruby", require: "watchtower"

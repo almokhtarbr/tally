@@ -36,7 +36,9 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Install application gems
-COPY vendor/* ./vendor/
+# vendor/ tree must be present before `bundle install` (holds the
+# watchtower-ruby path gem's gemspec). A glob here would flatten subdirs.
+COPY vendor/ ./vendor/
 COPY Gemfile Gemfile.lock ./
 
 RUN bundle install && \
