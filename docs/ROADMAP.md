@@ -28,20 +28,26 @@ reports, CSV export, HMAC webhooks with auto-disable.
   partitions past `EVENTS_RETENTION_MONTHS`. — #4
 - **Slack-formatted webhooks** — a `hooks.slack.com` URL gets a readable
   message, not raw JSON. — #5
+- **Per-project retention** — `retention_days` on the project, enforced by a
+  scoped nightly delete for teams wanting a shorter window than the global
+  partition drop. — #6
+- **Public shareable dashboard link** — read-only tokenised project view at
+  `/s/:token`, `noindex`. — #7
+- **Go SDK** — zero-dependency client with background flush. — #9
+- **Password reset** — `generates_token_for` single-use 30-minute link,
+  wipes sessions on reset. — #10
+- **Custom dashboards** — any number of named boards per project; pin saved
+  reports as widgets, count-shaped reports show a headline metric. — #11
 
 ## Next
 
 Priority order — small, self-contained, each a PR:
 
-1. **Per-project retention** — a `retention_months` on the project for teams
-   that want shorter windows than the global partition drop (scoped delete).
-2. **Public shareable dashboard link** — read-only tokenised view of a
-   project's dashboard.
-3. **Custom dashboards** — more than one saved layout per project (build on
-   `SavedReport`).
-4. **Multi-property breakdown on trends** — group-by two dimensions.
-5. **Email verification / password reset** for the auth flow.
-6. **Go SDK** — the one server language not yet covered.
+1. **Multi-property breakdown on trends** — group-by two dimensions. _(the
+   query + view already exist in the event explorer; needs a dedicated spec
+   and a UX pass.)_
+2. **Email verification** for new accounts, reusing the reset-token pattern.
+3. **Scheduled report exports** — email a saved report's CSV on a cadence.
 
 ## Not building (out of scope)
 

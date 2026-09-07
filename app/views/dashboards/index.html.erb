@@ -1,0 +1,32 @@
+<%= render "projects/page_header",
+  title: @project.name, subtitle: @project.url, back_path: root_path,
+  date_form_url: nil, from: nil, to: nil,
+  project: @project, active_tab: "Dashboards" %>
+
+<div class="flex items-center justify-between mb-4">
+  <p class="text-[13px] font-medium text-[#1a1a2e]">Dashboards</p>
+</div>
+
+<%= form_with url: project_dashboards_path(@project), method: :post, class: "flex items-center gap-2 mb-4" do %>
+  <input type="text" name="dashboard[name]" required placeholder="New dashboard name"
+    class="text-[13px] text-[#2d2d42] bg-white border border-[#e8e8ee] rounded-md px-3 py-2 w-64">
+  <button type="submit" class="bg-[#5046e5] text-white text-[13px] font-medium px-4 py-2 rounded-md hover:bg-[#4338ca]">Create</button>
+<% end %>
+
+<% if @dashboards.any? %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee]">
+    <% @dashboards.each_with_index do |dashboard, idx| %>
+      <div class="<%= 'border-t border-[#f0f0f5]' if idx > 0 %> px-4 py-3 flex items-center justify-between">
+        <div>
+          <%= link_to dashboard.name, project_dashboard_path(@project, dashboard), class: "text-[13px] font-medium text-[#5046e5] hover:underline" %>
+          <span class="text-[11px] text-[#8b8ba3] ml-2"><%= pluralize(dashboard.dashboard_widgets.size, "widget") %></span>
+        </div>
+        <%= link_to "Delete", project_dashboard_path(@project, dashboard), data: { turbo_method: :delete, turbo_confirm: "Delete this dashboard?" }, class: "text-[11px] text-[#ef4444] hover:underline" %>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <div class="bg-white rounded-xl border border-[#e8e8ee] p-10 text-center">
+    <p class="text-[13px] text-[#8b8ba3]">No dashboards yet. Create one, then pin saved reports to it.</p>
+  </div>
+<% end %>
