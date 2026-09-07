@@ -1,7 +1,7 @@
 <%= render "projects/page_header",
   title: @project.name, subtitle: @project.url, back_path: root_path,
   date_form_url: event_explorer_project_path(@project), from: @from, to: @to,
-  extra_hidden_fields: { event_name: params[:event_name], prop_key: params[:prop_key], prop_value: params[:prop_value], metric: @metric, group_by: @group_by }.compact,
+  extra_hidden_fields: { event_name: params[:event_name], prop_key: params[:prop_key], prop_value: params[:prop_value], metric: @metric, group_by: @group_by, second_group_by: @second_group_by }.compact,
   project: @project, active_tab: "Events" %>
 
 <!-- Filter Bar -->
@@ -45,7 +45,7 @@
       </select>
     </div>
     <button type="submit" class="bg-[#5046e5] text-white text-[11px] font-medium px-3 py-[5px] rounded-md hover:bg-[#4338ca]">Apply</button>
-    <% if params[:event_name].present? || params[:prop_key].present? || @group_by.present? %>
+    <% if params[:event_name].present? || params[:prop_key].present? || @group_by.present? || @second_group_by.present? %>
       <%= link_to "Clear", event_explorer_project_path(@project, from: @from, to: @to), class: "text-[11px] text-[#8b8ba3] hover:text-[#5046e5]" %>
     <% end %>
   <% end %>
