@@ -1,43 +1,50 @@
 # Roadmap
 
-## Week 1: Foundation + Ingestion
-- [ ] Rails 8 new app, PostgreSQL, Tailwind, Solid Queue
-- [ ] Migrations: projects, user_profiles, events (partitioned), event_daily_rollups, identity_aliases
-- [ ] Models with validations and associations
-- [ ] API key generation (pk_ / sk_ prefixed)
-- [ ] Ingestion API: POST /track, /batch, /identify, /alias
-- [ ] EventIngestionService (core business logic)
-- [ ] Rate limiting (Rack::Attack)
-- [ ] Idempotency via partial unique index
-- [ ] Test with curl
+_Status as of 2026-09. The original week-by-week build plan is done; this
+tracks what's shipped and what's next. Work is tracked as GitHub issues +
+PRs on `almokhtarbr/tally`._
 
-## Week 2: Query Layer + Dashboard
-- [ ] RollupService + RollupJob (every 10 min via Solid Queue)
-- [ ] Query endpoints: event_counts, top_events, user_timeline
-- [ ] Dashboard layout with Tailwind
-- [ ] Project CRUD + API key management UI
-- [ ] Project dashboard: event trends (Chart.js), top events, key metrics
-- [ ] User timeline page
-- [ ] Turbo Frames for lazy-loading widgets
-- [ ] Date range picker (Stimulus)
+## Shipped
 
-## Week 3: SDKs
-- [ ] Ruby gem: tally_analytics (zero-dep, Net::HTTP)
-- [ ] JS SDK: tally.js (batching, sendBeacon, localStorage identity)
-- [ ] Integration test: wire into C-Cube (Vroom), verify events flow
-- [ ] SDK documentation
+**Core** — event tracking (`/track`, `/batch`, `/identify`, `/alias`), identity
+resolution, idempotency, rate limiting, monthly-partitioned `events` table,
+pre-aggregated `EventDailyRollup`s.
 
-## Week 4: Deploy + Polish
-- [ ] Deploy with Kamal 2 (VPS + PostgreSQL)
-- [ ] Demo seed data (rake task generating realistic events)
-- [ ] README with architecture diagram
-- [ ] 2-min Loom walkthrough
-- [ ] Portfolio write-up
+**Analytics** — trends, funnels (with property filters), retention cohorts,
+top events/pages, event explorer with property breakdown, user timeline,
+bounce rate, period-over-period comparison.
 
-## Future (if needed)
-- Hourly rollups for higher-resolution charts
-- Property breakdowns (count by property value)
-- Retention grid (did user come back after day 1, 7, 30?)
-- Export to CSV
-- Webhook on event (e.g. notify Slack on "subscription-cancelled")
-- TimescaleDB for automatic partitioning at scale
+**Product** — real-time dashboard, error tracking + grouping, form analytics,
+user paths, anomaly detection (z-score) with webhook alerts, segments, saved
+reports, CSV export, HMAC webhooks with auto-disable.
+
+**SDKs** — Ruby, JavaScript, Python, Node (all zero-dependency).
+
+**Recent (this cycle)**
+- Fixed the test suite (default `events` partition, stale `structure.sql`,
+  auto-build Tailwind) + added CI (rspec / rubocop / brakeman). — #1
+- **Weekly email digest** per project, opt-out per member. — #3
+- **O(1) data retention** — `DropExpiredPartitionsJob` drops aged-out month
+  partitions past `EVENTS_RETENTION_MONTHS`. — #4
+- **Slack-formatted webhooks** — a `hooks.slack.com` URL gets a readable
+  message, not raw JSON. — #5
+
+## Next
+
+Priority order — small, self-contained, each a PR:
+
+1. **Per-project retention** — a `retention_months` on the project for teams
+   that want shorter windows than the global partition drop (scoped delete).
+2. **Public shareable dashboard link** — read-only tokenised view of a
+   project's dashboard.
+3. **Custom dashboards** — more than one saved layout per project (build on
+   `SavedReport`).
+4. **Multi-property breakdown on trends** — group-by two dimensions.
+5. **Email verification / password reset** for the auth flow.
+6. **Go SDK** — the one server language not yet covered.
+
+## Not building (out of scope)
+
+Session replay, feature flags, A/B testing, surveys, SQL/warehouse access,
+NL queries. See `FEATURE_COMPARISON.md` — the angle is the focused 20%, not
+Amplitude/PostHog parity.
