@@ -137,6 +137,22 @@ ALTER SEQUENCE public.events_id_seq OWNED BY public.events.id;
 
 
 --
+-- Name: events_default; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.events_default (
+    id bigint DEFAULT nextval('public.events_id_seq'::regclass) NOT NULL,
+    project_id bigint NOT NULL,
+    user_profile_id bigint,
+    name character varying NOT NULL,
+    properties jsonb DEFAULT '{}'::jsonb NOT NULL,
+    idempotency_key character varying,
+    occurred_at timestamp without time zone NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: events_y2026m02; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -520,6 +536,13 @@ ALTER SEQUENCE public.webhooks_id_seq OWNED BY public.webhooks.id;
 
 
 --
+-- Name: events_default; Type: TABLE ATTACH; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.events ATTACH PARTITION public.events_default DEFAULT;
+
+
+--
 -- Name: events_y2026m02; Type: TABLE ATTACH; Schema: public; Owner: -
 --
 
@@ -664,6 +687,14 @@ ALTER TABLE ONLY public.events
 
 
 --
+-- Name: events_default events_default_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.events_default
+    ADD CONSTRAINT events_default_pkey PRIMARY KEY (id, occurred_at);
+
+
+--
 -- Name: events_y2026m02 events_y2026m02_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -783,10 +814,10 @@ CREATE UNIQUE INDEX idx_events_idempotency ON ONLY public.events USING btree (pr
 
 
 --
--- Name: events_y2026m02_project_id_idempotency_key_occurred_at_idx; Type: INDEX; Schema: public; Owner: -
+-- Name: events_default_project_id_idempotency_key_occurred_at_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX events_y2026m02_project_id_idempotency_key_occurred_at_idx ON public.events_y2026m02 USING btree (project_id, idempotency_key, occurred_at) WHERE (idempotency_key IS NOT NULL);
+CREATE UNIQUE INDEX events_default_project_id_idempotency_key_occurred_at_idx ON public.events_default USING btree (project_id, idempotency_key, occurred_at) WHERE (idempotency_key IS NOT NULL);
 
 
 --
@@ -797,10 +828,10 @@ CREATE INDEX idx_events_project_name_time ON ONLY public.events USING btree (pro
 
 
 --
--- Name: events_y2026m02_project_id_name_occurred_at_idx; Type: INDEX; Schema: public; Owner: -
+-- Name: events_default_project_id_name_occurred_at_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX events_y2026m02_project_id_name_occurred_at_idx ON public.events_y2026m02 USING btree (project_id, name, occurred_at);
+CREATE INDEX events_default_project_id_name_occurred_at_idx ON public.events_default USING btree (project_id, name, occurred_at);
 
 
 --
@@ -811,10 +842,10 @@ CREATE INDEX idx_events_project_user_time ON ONLY public.events USING btree (pro
 
 
 --
--- Name: events_y2026m02_project_id_user_profile_id_occurred_at_idx; Type: INDEX; Schema: public; Owner: -
+-- Name: events_default_project_id_user_profile_id_occurred_at_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX events_y2026m02_project_id_user_profile_id_occurred_at_idx ON public.events_y2026m02 USING btree (project_id, user_profile_id, occurred_at);
+CREATE INDEX events_default_project_id_user_profile_id_occurred_at_idx ON public.events_default USING btree (project_id, user_profile_id, occurred_at);
 
 
 --
@@ -822,6 +853,34 @@ CREATE INDEX events_y2026m02_project_id_user_profile_id_occurred_at_idx ON publi
 --
 
 CREATE INDEX idx_events_properties ON ONLY public.events USING gin (properties);
+
+
+--
+-- Name: events_default_properties_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX events_default_properties_idx ON public.events_default USING gin (properties);
+
+
+--
+-- Name: events_y2026m02_project_id_idempotency_key_occurred_at_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX events_y2026m02_project_id_idempotency_key_occurred_at_idx ON public.events_y2026m02 USING btree (project_id, idempotency_key, occurred_at) WHERE (idempotency_key IS NOT NULL);
+
+
+--
+-- Name: events_y2026m02_project_id_name_occurred_at_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX events_y2026m02_project_id_name_occurred_at_idx ON public.events_y2026m02 USING btree (project_id, name, occurred_at);
+
+
+--
+-- Name: events_y2026m02_project_id_user_profile_id_occurred_at_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX events_y2026m02_project_id_user_profile_id_occurred_at_idx ON public.events_y2026m02 USING btree (project_id, user_profile_id, occurred_at);
 
 
 --
@@ -1084,6 +1143,41 @@ CREATE INDEX index_webhooks_on_project_id_and_active ON public.webhooks USING bt
 
 
 --
+-- Name: events_default_pkey; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.events_pkey ATTACH PARTITION public.events_default_pkey;
+
+
+--
+-- Name: events_default_project_id_idempotency_key_occurred_at_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.idx_events_idempotency ATTACH PARTITION public.events_default_project_id_idempotency_key_occurred_at_idx;
+
+
+--
+-- Name: events_default_project_id_name_occurred_at_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.idx_events_project_name_time ATTACH PARTITION public.events_default_project_id_name_occurred_at_idx;
+
+
+--
+-- Name: events_default_project_id_user_profile_id_occurred_at_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.idx_events_project_user_time ATTACH PARTITION public.events_default_project_id_user_profile_id_occurred_at_idx;
+
+
+--
+-- Name: events_default_properties_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.idx_events_properties ATTACH PARTITION public.events_default_properties_idx;
+
+
+--
 -- Name: events_y2026m02_pkey; Type: INDEX ATTACH; Schema: public; Owner: -
 --
 
@@ -1326,6 +1420,7 @@ ALTER TABLE ONLY public.anomalies
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260906120000'),
 ('20260316200003'),
 ('20260316200002'),
 ('20260316200001'),
