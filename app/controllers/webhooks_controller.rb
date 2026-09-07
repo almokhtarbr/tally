@@ -1,5 +1,6 @@
 class WebhooksController < ApplicationController
   include Authentication
+  include Auditable
 
   before_action :set_project
   before_action :set_webhook, only: [ :edit, :update, :destroy, :toggle, :test ]
@@ -16,6 +17,7 @@ class WebhooksController < ApplicationController
   def create
     @webhook = @project.webhooks.build(webhook_params)
     if @webhook.save
+      audit!(@project, "webhook.create", "Added a webhook to #{@webhook.url}", webhook_id: @webhook.id)
       redirect_to project_webhooks_path(@project), notice: "Webhook created."
     else
       @available_events = available_events
@@ -38,11 +40,14 @@ class WebhooksController < ApplicationController
 
   def destroy
     @webhook.destroy
+    audit!(@project, "webhook.delete", "Removed the webhook to #{@webhook.url}", webhook_id: @webhook.id)
     redirect_to project_webhooks_path(@project), notice: "Webhook deleted."
   end
 
   def toggle
     @webhook.update!(active: !@webhook.active?)
+    state = @webhook.active? ? "Enabled" : "Disabled"
+    audit!(@project, "webhook.toggle", "#{state} the webhook to #{@webhook.url}", webhook_id: @webhook.id, active: @webhook.active?)
     redirect_to project_webhooks_path(@project), notice: "Webhook #{@webhook.active? ? 'enabled' : 'disabled'}."
   end
 

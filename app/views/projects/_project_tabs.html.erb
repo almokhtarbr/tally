@@ -14,6 +14,7 @@
       { label: "Webhooks", path: project_webhooks_path(project) },
       { label: "Reports", path: project_saved_reports_path(project) },
       { label: "Dashboards", path: project_dashboards_path(project) },
+      { label: "Activity", path: audit_project_path(project) },
     ]
     current = local_assigns[:active_tab] || "Analytics"
   %>

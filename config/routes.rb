@@ -61,6 +61,7 @@ Rails.application.routes.draw do
       get :user_paths
       get :forms
       get :anomalies
+      get :audit
     end
 
     resources :segments
