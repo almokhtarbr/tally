@@ -13,7 +13,15 @@ class WebhookDeliveryJob < ApplicationJob
     http.open_timeout = 5
     http.read_timeout = 10
 
-    body = payload.to_json
+    # A Slack incoming webhook wants { "text": … }; everyone else gets the raw
+    # Tally payload with an HMAC signature they can verify.
+    body =
+      if SlackWebhookFormatter.slack_url?(webhook.url)
+        SlackWebhookFormatter.call(event_name, payload).to_json
+      else
+        payload.to_json
+      end
+
     request = Net::HTTP::Post.new(uri.path.presence || "/")
     request["Content-Type"] = "application/json"
     request["X-Tally-Event"] = event_name
