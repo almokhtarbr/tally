@@ -1,0 +1,6 @@
+Someone asked to reset the Tally password for <%= @user.email %>.
+
+Choose a new password (link valid for 30 minutes):
+<%= edit_password_reset_url(token: @token) %>
+
+If you didn't ask for this, ignore this email.
