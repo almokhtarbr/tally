@@ -20,6 +20,13 @@ module Watchtower
       @enabled_environments = %w[production development]
       @release     = resolve_release
       @timeout     = Float(ENV.fetch("WATCHTOWER_TIMEOUT", 2))
+      # TLS: verify by default. WATCHTOWER_SSL_VERIFY=0 (or WATCHTOWER_INSECURE=1)
+      # skips verification — for reaching an instance behind a private CA / a
+      # not-yet-issued public cert on a trusted network. WATCHTOWER_CA_FILE
+      # points at a bundle to trust instead.
+      @ssl_verify  = !(%w[0 false no off].include?(ENV["WATCHTOWER_SSL_VERIFY"].to_s.downcase) ||
+                       %w[1 true yes on].include?(ENV["WATCHTOWER_INSECURE"].to_s.downcase))
+      @ca_file     = ENV["WATCHTOWER_CA_FILE"].presence
       @queue_max   = Integer(ENV.fetch("WATCHTOWER_QUEUE_MAX", 100))
       @sample_rate = Float(ENV.fetch("WATCHTOWER_SAMPLE_RATE", 1.0))
       @ignored_exceptions = %w[
@@ -40,8 +47,10 @@ module Watchtower
       @logger      = nil
       @before_notify_hooks = []
 
-      # Structured log forwarding — opt-in; noisy and PII-prone.
-      @capture_logs   = %w[1 true yes].include?(ENV["WATCHTOWER_CAPTURE_LOGS"].to_s.downcase)
+      # Structured log forwarding. On by default now — a monitored app whose
+      # logs don't reach the dashboard is half-blind, which is the opposite of
+      # what the competitors ship. Opt out with WATCHTOWER_CAPTURE_LOGS=0.
+      @capture_logs   = !%w[0 false no off].include?(ENV["WATCHTOWER_CAPTURE_LOGS"].to_s.downcase)
       @log_level      = (ENV["WATCHTOWER_LOG_LEVEL"].presence || "info").downcase
       @log_queue_max  = Integer(ENV.fetch("WATCHTOWER_LOG_QUEUE_MAX", 2_000))
 
@@ -52,7 +61,26 @@ module Watchtower
       @perf_sample_rate = Float(ENV.fetch("WATCHTOWER_PERF_SAMPLE_RATE", 0.0))
       @perf_max_spans = Integer(ENV.fetch("WATCHTOWER_PERF_MAX_SPANS", 500))
       @perf_instrument_http = !%w[0 false no off].include?(ENV["WATCHTOWER_PERF_HTTP"].to_s.downcase)
+
+      # Report every unhandled Active Job exception as an error (Sidekiq/Solid
+      # Queue). The trace already flags it; this makes the crash itself show up
+      # in Issues like a request 500 would.
+      @capture_job_errors = !%w[0 false no off].include?(ENV["WATCHTOWER_JOB_ERRORS"].to_s.downcase)
+
+      # Minutely host/process probe — RSS, GC, threads, DB pool, load average —
+      # the "host metrics" panel every competitor has. Opt out with
+      # WATCHTOWER_PROBE=0.
+      @probe_enabled  = !%w[0 false no off].include?(ENV["WATCHTOWER_PROBE"].to_s.downcase)
+      @probe_interval = Integer(ENV.fetch("WATCHTOWER_PROBE_INTERVAL", 60))
+
+      # How to identify the current user on an event. Default: Warden (Devise)
+      # then a `Current.user`-style model. Override with
+      # `config.user_context = ->(env) { { id: ..., email: ... } }`.
+      @user_context = nil
     end
+
+    attr_accessor :capture_job_errors, :probe_enabled, :probe_interval, :user_context,
+                  :ssl_verify, :ca_file
 
     private
 

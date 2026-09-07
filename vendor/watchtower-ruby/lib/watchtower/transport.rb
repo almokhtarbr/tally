@@ -102,6 +102,13 @@ module Watchtower
       uri = URI.parse("#{@config.url}/api/#{@config.public_key}/#{kind}")
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = uri.scheme == "https"
+      if http.use_ssl?
+        if @config.ca_file && File.readable?(@config.ca_file)
+          http.ca_file = @config.ca_file
+        elsif !@config.ssl_verify
+          http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+        end
+      end
       http.open_timeout = @config.timeout
       http.read_timeout = @config.timeout
       req = Net::HTTP::Post.new(uri.request_uri, "content-type" => "application/json")

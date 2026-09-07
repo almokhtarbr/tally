@@ -4,6 +4,8 @@ require "watchtower/rack_middleware"
 require "watchtower/error_subscriber"
 require "watchtower/performance_subscriber"
 require "watchtower/breadcrumbs"
+require "watchtower/job_monitor"
+require "watchtower/probe"
 
 module Watchtower
   # Wires Watchtower into a Rails app. Loaded automatically by requiring the
@@ -34,9 +36,11 @@ module Watchtower
       Watchtower::Railtie.install_performance
       Watchtower::Railtie.install_log_forwarding
       Watchtower::Railtie.install_job_context
+      Watchtower::Railtie.install_job_error_capture
       Watchtower::Railtie.install_breadcrumbs
       Watchtower::Railtie.install_rake_hook
       Watchtower::Railtie.install_action_cable_hook
+      Watchtower::Railtie.install_probe
     end
 
     rake_tasks do
@@ -63,11 +67,29 @@ module Watchtower
         Watchtower::HttpInstrumentation.install!
       end
 
-      # Opt-in structured log forwarding (WATCHTOWER_CAPTURE_LOGS).
+      # Structured log forwarding (on by default; WATCHTOWER_CAPTURE_LOGS=0 off).
       def install_log_forwarding
-        return unless Watchtower.config.capture_logs && ::Rails.logger.respond_to?(:broadcast_to)
+        return unless Watchtower.config.capture_logs
 
-        ::Rails.logger.broadcast_to(Watchtower.log_sink)
+        if ::Rails.logger.respond_to?(:broadcast_to)
+          ::Rails.logger.broadcast_to(Watchtower.log_sink)
+        else
+          Watchtower.log("capture_logs on but Rails.logger has no #broadcast_to — logs not forwarded")
+        end
+      end
+
+      # Every unhandled Active Job exception → an Issue.
+      def install_job_error_capture
+        return unless Watchtower.config.capture_job_errors
+
+        Watchtower::JobMonitor.install!
+      end
+
+      # Minutely host/process probe.
+      def install_probe
+        return unless Watchtower.config.probe_enabled
+
+        Watchtower::Probe.start(Watchtower.config)
       end
 
       def install_job_context
