@@ -13,8 +13,8 @@ module Tally
     config.middleware.insert_before 0, Rack::Cors do
       allow do
         origins "*"
-        resource "/api/v1/*", headers: :any, methods: [:post, :get, :options], credentials: false
-        resource "/sdk/*", headers: :any, methods: [:get], credentials: false
+        resource "/api/v1/*", headers: :any, methods: [ :post, :get, :options ], credentials: false
+        resource "/sdk/*", headers: :any, methods: [ :get ], credentials: false
       end
     end
   end

@@ -8,6 +8,6 @@ class CreateEventDailyRollups < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :event_daily_rollups, [:project_id, :event_name, :date], unique: true, name: 'idx_rollups_project_event_date'
+    add_index :event_daily_rollups, [ :project_id, :event_name, :date ], unique: true, name: 'idx_rollups_project_event_date'
   end
 end

@@ -36,9 +36,9 @@ RSpec.describe SavedReport, type: :model do
   end
 
   it "returns query params from configuration" do
-    report = create(:saved_report, project: project, configuration: { "steps" => ["a", "b"] })
+    report = create(:saved_report, project: project, configuration: { "steps" => [ "a", "b" ] })
     params = report.to_query_params
-    expect(params["steps"]).to eq(["a", "b"])
+    expect(params["steps"]).to eq([ "a", "b" ])
     expect(params["report_id"]).to eq(report.id)
   end
 

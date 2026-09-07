@@ -29,7 +29,7 @@ RSpec.describe "POST /api/v1/batch", type: :request do
 
   it "returns 401 with invalid API key" do
     post "/api/v1/batch",
-      params: { events: [{ event: "test" }] }.to_json,
+      params: { events: [ { event: "test" } ] }.to_json,
       headers: api_headers("pk_invalid")
 
     expect(response).to have_http_status(:unauthorized)

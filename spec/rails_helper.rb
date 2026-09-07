@@ -14,7 +14,15 @@ rescue ActiveRecord::PendingMigrationError => e
 end
 
 RSpec.configure do |config|
-  config.fixture_paths = [Rails.root.join('spec/fixtures')]
+  # Request specs render the layout, which links tailwind.css. Build it once
+  # if a fresh clone / CI hasn't.
+  config.before(:suite) do
+    unless Rails.root.join('app/assets/builds/tailwind.css').exist?
+      system('bin/rails', 'tailwindcss:build', exception: true)
+    end
+  end
+
+  config.fixture_paths = [ Rails.root.join('spec/fixtures') ]
   config.use_transactional_fixtures = true
   config.infer_spec_type_from_file_location!
   config.filter_rails_from_backtrace!

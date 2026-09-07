@@ -8,6 +8,6 @@ class CreateSavedReports < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :saved_reports, [:project_id, :report_type]
+    add_index :saved_reports, [ :project_id, :report_type ]
   end
 end

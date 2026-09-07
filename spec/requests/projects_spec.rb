@@ -93,18 +93,18 @@ RSpec.describe "Projects", type: :request do
       user_profile = create(:user_profile, project: project)
       create(:event, project: project, user_profile: user_profile, name: "signup", occurred_at: 2.days.ago)
       create(:event, project: project, user_profile: user_profile, name: "purchase", occurred_at: 1.day.ago)
-      get funnels_project_path(project, steps: ["signup", "purchase"], from: 7.days.ago.to_date, to: Date.current)
+      get funnels_project_path(project, steps: [ "signup", "purchase" ], from: 7.days.ago.to_date, to: Date.current)
       expect(response).to have_http_status(:ok)
     end
 
     it "supports property filter" do
-      get funnels_project_path(project, steps: ["signup"], filter_prop_key: "plan", filter_prop_value: "pro")
+      get funnels_project_path(project, steps: [ "signup" ], filter_prop_key: "plan", filter_prop_value: "pro")
       expect(response).to have_http_status(:ok)
     end
 
     it "supports segment filter" do
       segment = create(:segment, project: project)
-      get funnels_project_path(project, steps: ["signup", "purchase"], segment_id: segment.id)
+      get funnels_project_path(project, steps: [ "signup", "purchase" ], segment_id: segment.id)
       expect(response).to have_http_status(:ok)
     end
   end
@@ -259,7 +259,7 @@ RSpec.describe "Projects", type: :request do
     end
 
     it "exports funnel CSV" do
-      get export_csv_project_path(project, type: "funnel", steps: ["signup", "purchase"])
+      get export_csv_project_path(project, type: "funnel", steps: [ "signup", "purchase" ])
       expect(response).to have_http_status(:ok)
       expect(response.content_type).to include("text/csv")
       expect(response.body).to include("Step,Users")

@@ -17,7 +17,7 @@ module EventsHelper
     "$network_error" => "bg-[#f59e0b]/10 text-[#f59e0b]",
     "$server_error" => "bg-[#f97316]/10 text-[#f97316]",
     "$resize" => "bg-[#8b8ba3]/10 text-[#8b8ba3]",
-    "$field_time" => "bg-[#8b8ba3]/10 text-[#8b8ba3]",
+    "$field_time" => "bg-[#8b8ba3]/10 text-[#8b8ba3]"
   }.freeze
 
   def event_badge_class(name)

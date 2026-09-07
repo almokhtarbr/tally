@@ -11,6 +11,6 @@ class CreateWebhooks < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :webhooks, [:project_id, :active]
+    add_index :webhooks, [ :project_id, :active ]
   end
 end

@@ -3,6 +3,6 @@ FactoryBot.define do
     project
     name { "My Report" }
     report_type { "funnel" }
-    configuration { { "steps" => ["signup", "purchase"], "window" => "7d" } }
+    configuration { { "steps" => [ "signup", "purchase" ], "window" => "7d" } }
   end
 end

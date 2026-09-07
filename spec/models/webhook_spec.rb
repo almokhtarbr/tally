@@ -5,29 +5,29 @@ RSpec.describe Webhook, type: :model do
 
   describe "validations" do
     it "requires a url" do
-      webhook = Webhook.new(project: project, url: nil, event_names: ["*"])
+      webhook = Webhook.new(project: project, url: nil, event_names: [ "*" ])
       expect(webhook).not_to be_valid
     end
 
     it "requires a valid HTTP URL" do
-      webhook = Webhook.new(project: project, url: "not-a-url", event_names: ["*"])
+      webhook = Webhook.new(project: project, url: "not-a-url", event_names: [ "*" ])
       expect(webhook).not_to be_valid
     end
 
     it "accepts valid HTTPS URL" do
-      webhook = Webhook.new(project: project, url: "https://example.com/webhook", event_names: ["*"])
+      webhook = Webhook.new(project: project, url: "https://example.com/webhook", event_names: [ "*" ])
       expect(webhook).to be_valid
     end
   end
 
   describe "#matches_event?" do
     it "matches wildcard" do
-      webhook = create(:webhook, project: project, event_names: ["*"])
+      webhook = create(:webhook, project: project, event_names: [ "*" ])
       expect(webhook.matches_event?("purchase")).to be true
     end
 
     it "matches specific event" do
-      webhook = create(:webhook, project: project, event_names: ["purchase", "signup"])
+      webhook = create(:webhook, project: project, event_names: [ "purchase", "signup" ])
       expect(webhook.matches_event?("purchase")).to be true
       expect(webhook.matches_event?("login")).to be false
     end

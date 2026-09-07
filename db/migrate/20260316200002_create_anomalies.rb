@@ -14,7 +14,7 @@ class CreateAnomalies < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :anomalies, [:project_id, :event_name, :detected_at]
-    add_index :anomalies, [:project_id, :resolved_at], where: "resolved_at IS NULL", name: "idx_anomalies_active"
+    add_index :anomalies, [ :project_id, :event_name, :detected_at ]
+    add_index :anomalies, [ :project_id, :resolved_at ], where: "resolved_at IS NULL", name: "idx_anomalies_active"
   end
 end

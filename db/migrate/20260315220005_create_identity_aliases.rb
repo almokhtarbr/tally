@@ -7,6 +7,6 @@ class CreateIdentityAliases < ActiveRecord::Migration[8.0]
       t.datetime :created_at, null: false
     end
 
-    add_index :identity_aliases, [:project_id, :anonymous_id], unique: true
+    add_index :identity_aliases, [ :project_id, :anonymous_id ], unique: true
   end
 end

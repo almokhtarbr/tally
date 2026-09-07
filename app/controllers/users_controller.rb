@@ -1,7 +1,7 @@
 class UsersController < ApplicationController
   include Authentication
 
-  before_action :require_admin!, except: [:edit_profile, :update_profile]
+  before_action :require_admin!, except: [ :edit_profile, :update_profile ]
 
   def index
     @users = User.order(:name)

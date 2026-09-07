@@ -2,7 +2,7 @@ class SegmentsController < ApplicationController
   include Authentication
 
   before_action :set_project
-  before_action :set_segment, only: [:show, :edit, :update, :destroy]
+  before_action :set_segment, only: [ :show, :edit, :update, :destroy ]
 
   def index
     @segments = @project.segments.order(:name)
@@ -63,7 +63,7 @@ class SegmentsController < ApplicationController
   end
 
   def segment_params
-    params.require(:segment).permit(:name, :description, conditions: [:type, :event, :operator, :days, :count, :key, :value])
+    params.require(:segment).permit(:name, :description, conditions: [ :type, :event, :operator, :days, :count, :key, :value ])
   end
 
   def available_events
