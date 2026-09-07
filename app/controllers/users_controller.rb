@@ -13,10 +13,32 @@ class UsersController < ApplicationController
 
   def create
     @user = User.new(user_params)
-    if @user.save
-      redirect_to users_path, notice: "User invited."
+
+    if invite_by_email?
+      # No password typed: stash an unusable random one so the record is
+      # valid, then email a link for the member to set their own.
+      @user.password = @user.password_confirmation = SecureRandom.base58(24)
+      if @user.save
+        InvitationMailer.invite(@user, current_user).deliver_later
+        redirect_to users_path, notice: "Invitation sent to #{@user.email}."
+      else
+        render :new, status: :unprocessable_entity
+      end
+    elsif @user.save
+      @user.update_column(:invitation_accepted_at, Time.current)
+      redirect_to users_path, notice: "User created."
     else
       render :new, status: :unprocessable_entity
+    end
+  end
+
+  def resend_invitation
+    user = User.find(params[:id])
+    if user.invitation_pending?
+      InvitationMailer.invite(user, current_user).deliver_later
+      redirect_to users_path, notice: "Invitation resent to #{user.email}."
+    else
+      redirect_to users_path, alert: "#{user.name} has already accepted their invitation."
     end
   end
 
@@ -60,6 +82,10 @@ class UsersController < ApplicationController
   def require_admin!
     return if current_user&.admin?
     redirect_to root_path, alert: "Not authorized."
+  end
+
+  def invite_by_email?
+    params.dig(:user, :password).blank?
   end
 
   def user_params

@@ -13,6 +13,7 @@ class SetupController < ApplicationController
   def create
     @user = User.new(setup_params)
     @user.role = "admin"
+    @user.invitation_accepted_at = Time.current
 
     if @user.save
       start_new_session(@user, request: request)

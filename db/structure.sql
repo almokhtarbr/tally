@@ -543,7 +543,8 @@ CREATE TABLE public.users (
     name character varying NOT NULL,
     role character varying DEFAULT 'member'::character varying NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    invitation_accepted_at timestamp(6) without time zone
 );
 
 
@@ -1577,6 +1578,7 @@ ALTER TABLE ONLY public.anomalies
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260906170000'),
 ('20260906160000'),
 ('20260906150000'),
 ('20260906140000'),
